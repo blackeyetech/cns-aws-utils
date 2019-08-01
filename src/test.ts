@@ -27,12 +27,12 @@ class App extends CNShell {
       publishTopic: topic === undefined ? "UNKNOWN" : topic,
     });
 
-    utils.replayRecordings("sns.pb");
-    utils.startRecordingSns("sns.pb");
+    // utils.replayRecordings("sns.pb");
+    // utils.startRecordingSns("sns.pb");
 
-    utils.publishSnsMessage(SNS1, "Fecking feckers1");
-    utils.publishSnsMessage(SNS1, "Fecking feckers2");
-    utils.publishSnsMessage(SNS1, "Fecking feckers3");
+    // utils.publishSnsMessage(SNS1, "Fecking feckers1");
+    // utils.publishSnsMessage(SNS1, "Fecking feckers2");
+    // utils.publishSnsMessage(SNS1, "Fecking feckers3");
 
     utils.addSqsSender(SENDER, {
       region: "eu-west-1",
@@ -42,8 +42,8 @@ class App extends CNShell {
     utils.addSqsReceiver(RECVER1, {
       region: "eu-west-1",
       queue: queue === undefined ? "UNKNOWN" : queue,
-      pollInterval: 10000,
-      backoffInterval: 30000,
+      pollInterval: 10,
+      backoffInterval: 5,
       msgProcesser: async msg => {
         console.log(msg.Body);
         return;
@@ -53,8 +53,8 @@ class App extends CNShell {
     utils.addSqsReceiver(RECVER2, {
       region: "eu-west-1",
       queue: queue === undefined ? "UNKNOWN" : queue,
-      pollInterval: 10000,
-      backoffInterval: 30000,
+      pollInterval: 10,
+      backoffInterval: 5,
       msgProcesser: async msg => {
         console.log(msg.Body);
         return;
@@ -105,8 +105,8 @@ class App extends CNShell {
     await utils.sendSqsMessage(SENDER, "Howdy sue!!");
     await utils.sendSqsMessage(SENDER, "Howdy foo!!");
 
-    // utils.startRecordingSqsReceivers("recver.pb");
-    // utils.start();
+    utils.startRecordingSqsReceivers("recver.pb");
+    utils.start();
 
     return true;
   }

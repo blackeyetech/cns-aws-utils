@@ -37,9 +37,9 @@ class AwsSqsReceiver extends AwsBase {
     this._queue = opts.queue;
     this.info("Queue: %s", this._queue);
     this._pollInterval = opts.pollInterval;
-    this.info("PollInterval (ms): %s", this._pollInterval);
+    this.info("PollInterval (s): %s", this._pollInterval);
     this._backoffInterval = opts.backoffInterval;
-    this.info("BackoffInterval (ms): %s", this._backoffInterval);
+    this.info("BackoffInterval (s): %s", this._backoffInterval);
     this._processMessage = opts.msgProcesser;
 
     this._nowReceiving = false;
@@ -64,6 +64,7 @@ class AwsSqsReceiver extends AwsBase {
       AttributeNames: ["All"],
       MaxNumberOfMessages: MIN_BATCH_SIZE,
       MessageAttributeNames: ["All"],
+      WaitTimeSeconds: this._pollInterval,
     };
 
     // If we have received msgs and we have not received a stop request
@@ -77,7 +78,12 @@ class AwsSqsReceiver extends AwsBase {
           this.error("receiveMessage Error: %s", e);
         });
 
-      if (data === undefined || data.Messages === undefined) {
+      if (
+        data === null ||
+        data === undefined ||
+        data.Messages === undefined ||
+        data.Messages.length === 0
+      ) {
         processed = 0;
       } else {
         processed = await this.receiveMessage(data.Messages);
@@ -87,7 +93,7 @@ class AwsSqsReceiver extends AwsBase {
     // If we have not received a request to stop then backoff for a while
     // before checking if anymore msgs have come in
     if (!this._stopNow) {
-      setTimeout(() => this.startReceiving(), this._backoffInterval);
+      setTimeout(() => this.startReceiving(), this._backoffInterval * 1000);
     }
 
     this._nowReceiving = false;
