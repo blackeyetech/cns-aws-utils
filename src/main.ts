@@ -227,4 +227,4 @@ class AwsUtils extends CNShell.CNExtension {
   }
 }
 
-export { AwsUtils, AwsSqsReceiverOpts, AwsSqsSenderOpts };
+export { AwsUtils, AwsSqsReceiverOpts, AwsSqsSenderOpts, SQS, SNS };
