@@ -4,6 +4,9 @@
   "description": "A Cloud Native extension for AWS",
   "main": "./dist/main.js",
   "bin": "",
+  "files": [
+    "dist/**/*"
+  ],
   "lint-staged": {
     "**/*.js": [
       "prettier --write",
