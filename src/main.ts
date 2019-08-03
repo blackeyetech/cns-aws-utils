@@ -69,7 +69,7 @@ class AwsUtils extends CNShell.CNExtension {
     this._queues.set(name, new AwsSqsReceiver(name, this._shell, opts));
   }
 
-  addSnsTopic(name: string, opts: AwsSnsOpts) {
+  addSnsPublisher(name: string, opts: AwsSnsOpts) {
     if (this._topics.has(name)) {
       throw new Error(
         `addSnsTopic: Topic with the name ${name} already exists!`,

@@ -22,7 +22,7 @@ class App extends CNShell {
 
   async start(): Promise<boolean> {
     let utils = new AwsUtils("aws-utils", app);
-    utils.addSnsTopic(SNS1, {
+    utils.addSnsPublisher(SNS1, {
       region: "eu-west-1",
       publishTopic: topic === undefined ? "UNKNOWN" : topic,
     });
