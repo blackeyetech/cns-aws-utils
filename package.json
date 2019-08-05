@@ -57,9 +57,9 @@
     "typescript": "^3.5.3"
   },
   "dependencies": {
-    "@types/node": "^12.6.8",
+    "@types/node": "^12.6.9",
     "aws-sdk": "^2.503.0",
-    "cn-shell": "^2.0.1"
+    "cn-shell": "^2.2.0"
   },
   "repository": {
     "type": "git",

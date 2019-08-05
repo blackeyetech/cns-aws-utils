@@ -1,6 +1,5 @@
 // imports here
 import { AwsBase, AwsOpts } from "./aws-base";
-import CNShell from "cn-shell";
 import SNS from "aws-sdk/clients/sns";
 
 // import AWS from "aws-sdk/global";
@@ -21,8 +20,8 @@ class AwsSns extends AwsBase {
   private _sns: SNS;
 
   // Constructor here
-  constructor(name: string, shell: CNShell, opts: AwsSnsOpts) {
-    super(name, shell, opts);
+  constructor(name: string, opts: AwsSnsOpts) {
+    super(name, opts);
 
     this._publishTopic = opts.publishTopic;
     this.info("Publish Topic: %s", this._publishTopic);
@@ -32,7 +31,15 @@ class AwsSns extends AwsBase {
   }
 
   // Public and Private methods here
-  start(): void {}
+  async start(): Promise<boolean> {
+    return true;
+  }
+
+  async stop(): Promise<void> {}
+
+  async healthCheck(): Promise<boolean> {
+    return true;
+  }
 
   async injectMessage(msg: string): Promise<boolean> {
     let parsed: any = JSON.parse(msg);
@@ -68,8 +75,6 @@ class AwsSns extends AwsBase {
 
     return success;
   }
-
-  async stop(): Promise<any> {}
 }
 
 export { AwsSns, AwsSnsOpts };

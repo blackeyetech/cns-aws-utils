@@ -1,5 +1,5 @@
 import CNShell from "cn-shell";
-import { AwsUtils } from "./main";
+import * as CNAwsUtils from "./main";
 
 const SENDER = "Sender1";
 const RECVER1 = "Receiver1";
@@ -21,7 +21,7 @@ class App extends CNShell {
   }
 
   async start(): Promise<boolean> {
-    let utils = new AwsUtils("aws-utils", app);
+    let utils = new CNAwsUtils.AwsUtils("aws-utils");
     utils.addSnsPublisher(SNS1, {
       region: "eu-west-1",
       publishTopic: topic === undefined ? "UNKNOWN" : topic,
@@ -44,7 +44,7 @@ class App extends CNShell {
       queue: queue === undefined ? "UNKNOWN" : queue,
       pollInterval: 10,
       backoffInterval: 5,
-      msgProcesser: async msg => {
+      msgProcesser: async (msg: CNAwsUtils.SQS.Message) => {
         console.log(msg.Body);
         return;
       },
@@ -55,7 +55,7 @@ class App extends CNShell {
       queue: queue === undefined ? "UNKNOWN" : queue,
       pollInterval: 10,
       backoffInterval: 5,
-      msgProcesser: async msg => {
+      msgProcesser: async (msg: CNAwsUtils.SQS.Message) => {
         console.log(msg.Body);
         return;
       },

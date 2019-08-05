@@ -1,6 +1,5 @@
 // imports here
 import { AwsBase, AwsOpts } from "./aws-base";
-import CNShell from "cn-shell";
 import SQS from "aws-sdk/clients/sqs";
 
 // import AWS from "aws-sdk/global";
@@ -21,8 +20,8 @@ class AwsSqsSender extends AwsBase {
   private _sqs: SQS;
 
   // Constructor here
-  constructor(name: string, shell: CNShell, opts: AwsSqsSenderOpts) {
-    super(name, shell, opts);
+  constructor(name: string, opts: AwsSqsSenderOpts) {
+    super(name, opts);
 
     this._queue = opts.queue;
     this.info("Queue: %s", this._queue);
@@ -32,7 +31,9 @@ class AwsSqsSender extends AwsBase {
   }
 
   // Public and Private methods here
-  start(): void {}
+  async start(): Promise<boolean> {
+    return true;
+  }
 
   async injectMessage(msg: string): Promise<boolean> {
     let parsed: any = JSON.parse(msg);
@@ -69,7 +70,11 @@ class AwsSqsSender extends AwsBase {
     return success;
   }
 
-  async stop(): Promise<any> {}
+  async stop(): Promise<void> {}
+
+  async healthCheck(): Promise<boolean> {
+    return true;
+  }
 }
 
 export { AwsSqsSender, AwsSqsSenderOpts };

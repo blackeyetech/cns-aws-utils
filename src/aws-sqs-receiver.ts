@@ -1,6 +1,5 @@
 // imports here
 import { AwsBase, AwsOpts } from "./aws-base";
-import CNShell from "cn-shell";
 import SQS from "aws-sdk/clients/sqs";
 
 // import AWS from "aws-sdk/global";
@@ -31,8 +30,8 @@ class AwsSqsReceiver extends AwsBase {
   private _processMessage: (msg: SQS.Message) => void;
 
   // Constructor here
-  constructor(name: string, shell: CNShell, opts: AwsSqsReceiverOpts) {
-    super(name, shell, opts);
+  constructor(name: string, opts: AwsSqsReceiverOpts) {
+    super(name, opts);
 
     this._queue = opts.queue;
     this.info("Queue: %s", this._queue);
@@ -50,8 +49,10 @@ class AwsSqsReceiver extends AwsBase {
   }
 
   // Public and Private methods here
-  start(): void {
+  async start(): Promise<boolean> {
     setImmediate(() => this.startReceiving());
+
+    return true;
   }
 
   private async startReceiving(): Promise<void> {
@@ -142,7 +143,7 @@ class AwsSqsReceiver extends AwsBase {
     return processed;
   }
 
-  async stop(): Promise<any> {
+  async stop(): Promise<void> {
     this.info("Attempting to stop receiving ..,");
     this._stopNow = true;
 
@@ -164,6 +165,10 @@ class AwsSqsReceiver extends AwsBase {
       this.info("Stopped receiving!");
       resolve();
     }
+  }
+
+  async healthCheck(): Promise<boolean> {
+    return true;
   }
 }
 

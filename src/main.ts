@@ -9,21 +9,21 @@ import SNS from "aws-sdk/clients/sns";
 import * as fs from "fs";
 
 // Class AwsUtils here
-class AwsUtils extends CNShell.CNExtension {
+class AwsUtils extends CNShell {
   // Properties here
   private _queues: Map<string, AwsSqsSender | AwsSqsReceiver>;
   private _topics: Map<string, AwsSns>;
 
   // Constructor here
-  constructor(name: string, shell: CNShell) {
-    super(name, shell);
+  constructor(name: string) {
+    super(name);
 
     this._queues = new Map();
     this._topics = new Map();
   }
 
   // Methods here
-  start(): void {
+  async start(): Promise<boolean> {
     for (let [name, queue] of this._queues.entries()) {
       this.info(`Starting queue ${name} ...`);
 
@@ -33,9 +33,11 @@ class AwsUtils extends CNShell.CNExtension {
 
       this.info("Started!");
     }
+
+    return true;
   }
 
-  async stop(): Promise<any> {
+  async stop(): Promise<void> {
     for (let [name, queue] of this._queues.entries()) {
       this.info(`Stopping queue ${name} ...`);
 
@@ -47,6 +49,10 @@ class AwsUtils extends CNShell.CNExtension {
     }
   }
 
+  async healthCheck(): Promise<boolean> {
+    return true;
+  }
+
   addSqsSender(name: string, opts: AwsSqsSenderOpts) {
     if (this._queues.has(name)) {
       throw new Error(
@@ -55,7 +61,7 @@ class AwsUtils extends CNShell.CNExtension {
     }
 
     this.info(`Adding SQS Sender: ${name}`);
-    this._queues.set(name, new AwsSqsSender(name, this._shell, opts));
+    this._queues.set(name, new AwsSqsSender(name, opts));
   }
 
   addSqsReceiver(name: string, opts: AwsSqsReceiverOpts) {
@@ -66,7 +72,7 @@ class AwsUtils extends CNShell.CNExtension {
     }
 
     this.info(`Adding SQS Receiver: ${name}`);
-    this._queues.set(name, new AwsSqsReceiver(name, this._shell, opts));
+    this._queues.set(name, new AwsSqsReceiver(name, opts));
   }
 
   addSnsPublisher(name: string, opts: AwsSnsOpts) {
@@ -77,7 +83,7 @@ class AwsUtils extends CNShell.CNExtension {
     }
 
     this.info(`Adding SNS Topic: ${name}`);
-    this._topics.set(name, new AwsSns(name, this._shell, opts));
+    this._topics.set(name, new AwsSns(name, opts));
   }
 
   async sendSqsMessage(

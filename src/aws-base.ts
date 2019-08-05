@@ -32,14 +32,14 @@ interface PlaybackRecord {
 }
 
 // Class AwsBase here
-abstract class AwsBase extends CNShell.CNExtension {
+abstract class AwsBase extends CNShell {
   // Properties here
   protected readonly _region: string;
   protected _playbackFile: string;
 
   // Constructor here
-  constructor(name: string, shell: CNShell, opts: AwsOpts) {
-    super(name, shell);
+  constructor(name: string, opts: AwsOpts) {
+    super(name);
 
     this._region = opts.region;
     this.info("Region: %s", this._region);
