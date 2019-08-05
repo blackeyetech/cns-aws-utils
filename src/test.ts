@@ -21,7 +21,7 @@ class App extends CNShell {
   }
 
   async start(): Promise<boolean> {
-    let utils = new CNAwsUtils.AwsUtils("aws-utils");
+    let utils = new CNAwsUtils.CNAwsUtils("aws-utils");
     utils.addSnsPublisher(SNS1, {
       region: "eu-west-1",
       publishTopic: topic === undefined ? "UNKNOWN" : topic,

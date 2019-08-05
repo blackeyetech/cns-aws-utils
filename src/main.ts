@@ -9,7 +9,7 @@ import SNS from "aws-sdk/clients/sns";
 import * as fs from "fs";
 
 // Class AwsUtils here
-class AwsUtils extends CNShell {
+class CNAwsUtils extends CNShell {
   // Properties here
   private _queues: Map<string, AwsSqsSender | AwsSqsReceiver>;
   private _topics: Map<string, AwsSns>;
@@ -233,4 +233,11 @@ class AwsUtils extends CNShell {
   }
 }
 
-export { AwsUtils, AwsSqsReceiverOpts, AwsSqsSenderOpts, AwsSnsOpts, SQS, SNS };
+export {
+  CNAwsUtils,
+  AwsSqsReceiverOpts,
+  AwsSqsSenderOpts,
+  AwsSnsOpts,
+  SQS,
+  SNS,
+};
