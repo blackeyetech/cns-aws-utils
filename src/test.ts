@@ -44,9 +44,13 @@ class App extends CNShell {
       queue: queue === undefined ? "UNKNOWN" : queue,
       pollInterval: 10,
       backoffInterval: 5,
-      msgProcesser: async (msg: CNAwsUtils.SQS.Message) => {
-        console.log(msg.Body);
-        return;
+      msgProcesser: async (msgs: CNAwsUtils.SQS.Message[]) => {
+        let processed: number[] = [];
+        for (let i = 0; i < msgs.length; i++) {
+          console.log(msgs[i].Body);
+          processed.push(i);
+        }
+        return processed;
       },
     });
 
@@ -55,9 +59,13 @@ class App extends CNShell {
       queue: queue === undefined ? "UNKNOWN" : queue,
       pollInterval: 10,
       backoffInterval: 5,
-      msgProcesser: async (msg: CNAwsUtils.SQS.Message) => {
-        console.log(msg.Body);
-        return;
+      msgProcesser: async (msgs: CNAwsUtils.SQS.Message[]) => {
+        let processed: number[] = [];
+        for (let i = 0; i < msgs.length; i++) {
+          console.log(msgs[i].Body);
+          processed.push(i);
+        }
+        return processed;
       },
     });
 

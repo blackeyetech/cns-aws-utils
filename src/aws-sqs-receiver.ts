@@ -15,7 +15,7 @@ interface AwsSqsReceiverOpts extends AwsOpts {
   pollInterval: number;
   backoffInterval: number;
 
-  msgProcesser: (msg: SQS.Message) => Promise<void>;
+  msgProcesser: (msgs: SQS.Message[]) => Promise<number[]>;
 }
 
 // Class AwsSqsReceiver here
@@ -27,7 +27,7 @@ class AwsSqsReceiver extends AwsBase {
   private _backoffInterval: number;
   private _nowReceiving: boolean;
   private _stopNow: boolean;
-  private _processMessage: (msg: SQS.Message) => void;
+  private _processMessages: (msgs: SQS.Message[]) => Promise<number[]>;
 
   // Constructor here
   constructor(name: string, opts: AwsSqsReceiverOpts) {
@@ -39,7 +39,7 @@ class AwsSqsReceiver extends AwsBase {
     this.info("PollInterval (s): %s", this._pollInterval);
     this._backoffInterval = opts.backoffInterval;
     this.info("BackoffInterval (s): %s", this._backoffInterval);
-    this._processMessage = opts.msgProcesser;
+    this._processMessages = opts.msgProcesser;
 
     this._nowReceiving = false;
     this._stopNow = false;
@@ -105,13 +105,6 @@ class AwsSqsReceiver extends AwsBase {
   }
 
   private async receiveMessage(msgs: SQS.Message[]): Promise<number> {
-    let processed = 0;
-
-    let delParams: SQS.DeleteMessageBatchRequest = {
-      QueueUrl: this._queue,
-      Entries: [],
-    };
-
     // Check if we are currently recording a playback
     if (this._playbackFile !== "") {
       this.writePlayback(
@@ -120,16 +113,20 @@ class AwsSqsReceiver extends AwsBase {
       );
     }
 
-    // Process each msg individually
-    for (let i in msgs) {
-      await this._processMessage(msgs[i]);
+    // Process msgs in a batch
+    let msgsProcessed = await this._processMessages(msgs);
 
+    let delParams: SQS.DeleteMessageBatchRequest = {
+      QueueUrl: this._queue,
+      Entries: [],
+    };
+
+    // Only delete the messages that have been marked processed
+    for (let i of msgsProcessed) {
       delParams.Entries.push({
         Id: `${i}`,
         ReceiptHandle: msgs[i].ReceiptHandle,
       } as SQS.DeleteMessageBatchRequestEntry);
-
-      processed++;
     }
 
     // Delete the messages that have been processed
@@ -140,7 +137,7 @@ class AwsSqsReceiver extends AwsBase {
         this.error("deleteMessage Error: %s", e);
       });
 
-    return processed;
+    return msgsProcessed.length;
   }
 
   async stop(): Promise<void> {
