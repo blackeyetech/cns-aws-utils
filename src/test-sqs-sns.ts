@@ -22,7 +22,7 @@ class App extends CNShell {
 
   async start(): Promise<boolean> {
     let utils = new AWS.Utils("aws-utils");
-    let topic = utils.addSnsTopic(SNS1, {
+    let topic1 = utils.addSnsTopic(SNS1, {
       region: "eu-west-1",
       publishTopic: topic === undefined ? "UNKNOWN" : topic,
     });
@@ -30,9 +30,9 @@ class App extends CNShell {
     // utils.replayRecordings("sns.pb");
     // utils.startRecordingSns("sns.pb");
 
-    topic.publish(SNS1, "Fecking feckers 1");
-    topic.publish(SNS1, "Fecking feckers 2");
-    topic.publish(SNS1, "Fecking feckers 3");
+    topic1.publish("Fecking feckers 1");
+    topic1.publish("Fecking feckers 2");
+    topic1.publish("Fecking feckers 3");
 
     let sender1 = utils.addSqsSender(SENDER, {
       region: "eu-west-1",
