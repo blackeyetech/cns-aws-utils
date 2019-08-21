@@ -1,18 +1,22 @@
 // imports here
 import CNShell from "cn-shell";
-import { AwsBase } from "./aws-base";
-import { AwsSqsReceiver, AwsSqsReceiverOpts } from "./aws-sqs-receiver";
-import { AwsSqsSender, AwsSqsSenderOpts } from "./aws-sqs-sender";
-import { AwsSns, AwsSnsOpts } from "./aws-sns";
-import SQS from "aws-sdk/clients/sqs";
-import SNS from "aws-sdk/clients/sns";
+import { Base } from "./aws-base";
+import * as SQS from "./aws-sqs";
+import * as SNS from "./aws-sns";
+import * as DDB from "./aws-dynamodb";
+
+import AWS_SQS from "aws-sdk/clients/sqs";
+import AWS_SNS from "aws-sdk/clients/sns";
+import AWS_DDB from "aws-sdk/clients/dynamodb";
+
 import * as fs from "fs";
 
 // Class AwsUtils here
-class CNAwsUtils extends CNShell {
+class Utils extends CNShell {
   // Properties here
-  private _queues: Map<string, AwsSqsSender | AwsSqsReceiver>;
-  private _topics: Map<string, AwsSns>;
+  private _queues: Map<string, SQS.Sender | SQS.Receiver>;
+  private _topics: Map<string, SNS.SNS>;
+  private _tables: Map<string, DDB.Table>;
 
   // Constructor here
   constructor(name: string) {
@@ -20,6 +24,7 @@ class CNAwsUtils extends CNShell {
 
     this._queues = new Map();
     this._topics = new Map();
+    this._tables = new Map();
   }
 
   // Methods here
@@ -27,7 +32,7 @@ class CNAwsUtils extends CNShell {
     for (let [name, queue] of this._queues.entries()) {
       this.info(`Starting queue ${name} ...`);
 
-      if (queue instanceof AwsSqsReceiver) {
+      if (queue instanceof SQS.Receiver) {
         queue.start();
       }
 
@@ -41,7 +46,7 @@ class CNAwsUtils extends CNShell {
     for (let [name, queue] of this._queues.entries()) {
       this.info(`Stopping queue ${name} ...`);
 
-      if (queue instanceof AwsSqsReceiver) {
+      if (queue instanceof SQS.Receiver) {
         await queue.stop();
       }
 
@@ -53,73 +58,61 @@ class CNAwsUtils extends CNShell {
     return true;
   }
 
-  addSqsSender(name: string, opts: AwsSqsSenderOpts) {
+  addSqsSender(name: string, opts: SQS.SenderOpts): SQS.Sender {
     if (this._queues.has(name)) {
       throw new Error(
         `addSqsSender: Queue with the name ${name} already exists!`,
       );
     }
 
+    let queue = new SQS.Sender(name, opts);
     this.info(`Adding SQS Sender: ${name}`);
-    this._queues.set(name, new AwsSqsSender(name, opts));
+    this._queues.set(name, queue);
+
+    return queue;
   }
 
-  addSqsReceiver(name: string, opts: AwsSqsReceiverOpts) {
+  addSqsReceiver(name: string, opts: SQS.ReceiverOpts): SQS.Receiver {
     if (this._queues.has(name)) {
       throw new Error(
         `addSqsReceiver: Queue with the name ${name} already exists!`,
       );
     }
 
+    let queue = new SQS.Receiver(name, opts);
+
     this.info(`Adding SQS Receiver: ${name}`);
-    this._queues.set(name, new AwsSqsReceiver(name, opts));
+    this._queues.set(name, queue);
+
+    return queue;
   }
 
-  addSnsPublisher(name: string, opts: AwsSnsOpts) {
+  addSnsPublisher(name: string, opts: SNS.Opts): SNS.SNS {
     if (this._topics.has(name)) {
       throw new Error(
         `addSnsTopic: Topic with the name ${name} already exists!`,
       );
     }
 
+    let sns = new SNS.SNS(name, opts);
+
     this.info(`Adding SNS Topic: ${name}`);
-    this._topics.set(name, new AwsSns(name, opts));
+    this._topics.set(name, sns);
+
+    return sns;
   }
 
-  async sendSqsMessage(
-    name: string,
-    msg: string,
-    attribs?: SQS.MessageBodyAttributeMap,
-  ): Promise<boolean> {
-    let queue = this._queues.get(name);
-
-    if (queue === undefined) {
-      throw new Error(
-        `sendSqsMessage: Can not find Queue with the name ${name}!`,
-      );
+  addTable(name: string, opts: DDB.Opts): DDB.Table {
+    if (this._tables.has(name)) {
+      throw new Error(`addTable: Table with the name ${name} already exists!`);
     }
 
-    if (queue instanceof AwsSqsReceiver) {
-      throw new Error(`sendSqsMessage: Queue ${name} not a sender!`);
-    }
+    let table = new DDB.Table(name, opts);
 
-    return await queue.sendMessage(msg, attribs);
-  }
+    this.info(`Adding DDB Table: ${name}`);
+    this._tables.set(name, table);
 
-  async publishSnsMessage(
-    name: string,
-    msg: string,
-    attribs?: SNS.MessageAttributeMap,
-  ): Promise<boolean> {
-    let topic = this._topics.get(name);
-
-    if (topic === undefined) {
-      throw new Error(
-        `publishSnsMessage: Can not find Topic with the name ${name}!`,
-      );
-    }
-
-    return await topic.publishMessage(msg, attribs);
+    return table;
   }
 
   startRecording(playbackFile: string): void {
@@ -134,7 +127,7 @@ class CNAwsUtils extends CNShell {
 
   startRecordingSqsReceivers(playbackFile: string): void {
     for (let [, queue] of this._queues.entries()) {
-      if (queue instanceof AwsSqsReceiver) {
+      if (queue instanceof SQS.Receiver) {
         queue.startRecording(playbackFile);
       }
     }
@@ -142,7 +135,7 @@ class CNAwsUtils extends CNShell {
 
   startRecordingSqsSenders(playbackFile: string): void {
     for (let [, queue] of this._queues.entries()) {
-      if (queue instanceof AwsSqsSender) {
+      if (queue instanceof SQS.Sender) {
         queue.startRecording(playbackFile);
       }
     }
@@ -165,7 +158,7 @@ class CNAwsUtils extends CNShell {
 
   stopRecordingSqsReceivers(): void {
     for (let [, queue] of this._queues.entries()) {
-      if (queue instanceof AwsSqsReceiver) {
+      if (queue instanceof SQS.Receiver) {
         queue.stopRecording();
       }
     }
@@ -173,7 +166,7 @@ class CNAwsUtils extends CNShell {
 
   stopRecordingSqsSenders(): void {
     for (let [, queue] of this._queues.entries()) {
-      if (queue instanceof AwsSqsSender) {
+      if (queue instanceof SQS.Sender) {
         queue.stopRecording();
       }
     }
@@ -190,7 +183,7 @@ class CNAwsUtils extends CNShell {
     let line = 1;
 
     while (true) {
-      let record = AwsBase.replayPlayback(fd, line);
+      let record = Base.replayPlayback(fd, line);
       line++;
 
       if (record === null) {
@@ -198,8 +191,8 @@ class CNAwsUtils extends CNShell {
       }
 
       if (
-        record.type === AwsBase.RecordTypes.SQS_SENDER ||
-        record.type === AwsBase.RecordTypes.SQS_RECEIVER
+        record.type === Base.RecordTypes.SQS_SENDER ||
+        record.type === Base.RecordTypes.SQS_RECEIVER
       ) {
         let queue = this._queues.get(record.name);
 
@@ -208,17 +201,17 @@ class CNAwsUtils extends CNShell {
         }
 
         if (
-          record.type === AwsBase.RecordTypes.SQS_SENDER &&
-          queue instanceof AwsSqsSender
+          record.type === Base.RecordTypes.SQS_SENDER &&
+          queue instanceof SQS.Sender
         ) {
           queue.injectMessage(record.msg);
         } else if (
-          record.type === AwsBase.RecordTypes.SQS_RECEIVER &&
-          queue instanceof AwsSqsReceiver
+          record.type === Base.RecordTypes.SQS_RECEIVER &&
+          queue instanceof SQS.Receiver
         ) {
           queue.injectMessages(record.msg);
         }
-      } else if (record.type === AwsBase.RecordTypes.SNS) {
+      } else if (record.type === Base.RecordTypes.SNS) {
         let topic = this._topics.get(record.name);
 
         if (topic === undefined) {
@@ -233,11 +226,4 @@ class CNAwsUtils extends CNShell {
   }
 }
 
-export {
-  CNAwsUtils,
-  AwsSqsReceiverOpts,
-  AwsSqsSenderOpts,
-  AwsSnsOpts,
-  SQS,
-  SNS,
-};
+export { Utils, SQS, SNS, DDB, AWS_SQS, AWS_SNS, AWS_DDB };

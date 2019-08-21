@@ -20,7 +20,7 @@ enum RecordTypes {
 }
 
 // Interfaces here
-interface AwsOpts {
+export interface Opts {
   region: string;
 }
 
@@ -32,13 +32,13 @@ interface PlaybackRecord {
 }
 
 // Class AwsBase here
-abstract class AwsBase extends CNShell {
+export abstract class Base extends CNShell {
   // Properties here
   protected readonly _region: string;
   protected _playbackFile: string;
 
   // Constructor here
-  constructor(name: string, opts: AwsOpts) {
+  constructor(name: string, opts: Opts) {
     super(name);
 
     this._region = opts.region;
@@ -124,30 +124,30 @@ abstract class AwsBase extends CNShell {
   // Static methods here
   static replayPlayback(fd: number, line: number): PlaybackRecord | null {
     // The first field is ALWAYS the playback version
-    let version = AwsBase.getPbFld("version", fd, line);
+    let version = Base.getPbFld("version", fd, line);
 
     switch (version) {
       case SQS_SND_PLAYBACK_VER_1:
         return {
           type: RecordTypes.SQS_SENDER,
-          name: AwsBase.getPbFld("name", fd, line),
-          ts: parseInt(AwsBase.getPbFld("ts", fd, line), 10),
-          msg: AwsBase.getPbFld("msg", fd, line),
+          name: Base.getPbFld("name", fd, line),
+          ts: parseInt(Base.getPbFld("ts", fd, line), 10),
+          msg: Base.getPbFld("msg", fd, line),
         };
         break;
       case SQS_RCV_PLAYBACK_VER_1:
         return {
           type: RecordTypes.SQS_RECEIVER,
-          name: AwsBase.getPbFld("name", fd, line),
-          ts: parseInt(AwsBase.getPbFld("ts", fd, line), 10),
-          msg: AwsBase.getPbFld("msg", fd, line),
+          name: Base.getPbFld("name", fd, line),
+          ts: parseInt(Base.getPbFld("ts", fd, line), 10),
+          msg: Base.getPbFld("msg", fd, line),
         };
       case SNS_PLAYBACK_VER_1:
         return {
           type: RecordTypes.SNS,
-          name: AwsBase.getPbFld("name", fd, line),
-          ts: parseInt(AwsBase.getPbFld("ts", fd, line), 10),
-          msg: AwsBase.getPbFld("msg", fd, line),
+          name: Base.getPbFld("name", fd, line),
+          ts: parseInt(Base.getPbFld("ts", fd, line), 10),
+          msg: Base.getPbFld("msg", fd, line),
         };
       case END_OF_FILE:
         return null;
@@ -195,5 +195,3 @@ abstract class AwsBase extends CNShell {
     return fldBuf.toString();
   }
 }
-
-export { AwsBase, AwsOpts };

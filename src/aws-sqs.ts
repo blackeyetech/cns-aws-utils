@@ -1,6 +1,6 @@
 // imports here
-import { AwsBase, AwsOpts } from "./aws-base";
-import SQS from "aws-sdk/clients/sqs";
+import { Base, Opts } from "./aws-base";
+import AWS_SQS from "aws-sdk/clients/sqs";
 
 // import AWS from "aws-sdk/global";
 // AWS.config.logger = console;
@@ -10,27 +10,95 @@ const SQS_API_VER = "2012-11-05";
 const MIN_BATCH_SIZE = 10;
 
 // Interfaces here
-interface AwsSqsReceiverOpts extends AwsOpts {
+export interface SenderOpts extends Opts {
+  queue: string;
+}
+
+export interface ReceiverOpts extends Opts {
   queue: string;
   pollInterval: number;
   backoffInterval: number;
 
-  msgProcesser: (msgs: SQS.Message[]) => Promise<number[]>;
+  msgProcesser: (msgs: AWS_SQS.Message[]) => Promise<number[]>;
 }
 
-// Class AwsSqsReceiver here
-class AwsSqsReceiver extends AwsBase {
+// Class Sender here
+export class Sender extends Base {
   // Properties here
   private readonly _queue: string;
-  private _sqs: SQS;
+  private _sqs: AWS_SQS;
+
+  // Constructor here
+  constructor(name: string, opts: SenderOpts) {
+    super(name, opts);
+
+    this._queue = opts.queue;
+    this.info("Queue: %s", this._queue);
+
+    // Create AWS service objects
+    this._sqs = new AWS_SQS({ region: this._region, apiVersion: SQS_API_VER });
+  }
+
+  // Public and Private methods here
+  async start(): Promise<boolean> {
+    return true;
+  }
+
+  async injectMessage(msg: string): Promise<boolean> {
+    let parsed: any = JSON.parse(msg);
+    return await this.sendMessage(parsed.msg, parsed.attribs);
+  }
+
+  async sendMessage(
+    msg: string,
+    attribs?: AWS_SQS.MessageBodyAttributeMap,
+  ): Promise<boolean> {
+    if (this._playbackFile !== "") {
+      this.writePlayback(
+        JSON.stringify({ msg, attribs }),
+        Base.RecordTypes.SQS_SENDER,
+      );
+    }
+
+    let params: AWS_SQS.SendMessageRequest = {
+      QueueUrl: this._queue,
+      MessageBody: msg,
+      MessageAttributes: attribs,
+    };
+
+    let success = true;
+
+    await this._sqs
+      .sendMessage(params)
+      .promise()
+      .catch(e => {
+        this.error("sendMessage Error: %s", e);
+        success = false;
+      });
+
+    return success;
+  }
+
+  async stop(): Promise<void> {}
+
+  async healthCheck(): Promise<boolean> {
+    return true;
+  }
+}
+
+// Class Receiver here
+export class Receiver extends Base {
+  // Properties here
+  private readonly _queue: string;
+  private _sqs: AWS_SQS;
   private _pollInterval: number;
   private _backoffInterval: number;
   private _nowReceiving: boolean;
   private _stopNow: boolean;
-  private _processMessages: (msgs: SQS.Message[]) => Promise<number[]>;
+  private _processMessages: (msgs: AWS_SQS.Message[]) => Promise<number[]>;
 
   // Constructor here
-  constructor(name: string, opts: AwsSqsReceiverOpts) {
+  constructor(name: string, opts: ReceiverOpts) {
     super(name, opts);
 
     this._queue = opts.queue;
@@ -45,7 +113,7 @@ class AwsSqsReceiver extends AwsBase {
     this._stopNow = false;
 
     // Create AWS service objects
-    this._sqs = new SQS({ region: this._region, apiVersion: SQS_API_VER });
+    this._sqs = new AWS_SQS({ region: this._region, apiVersion: SQS_API_VER });
   }
 
   // Public and Private methods here
@@ -60,7 +128,7 @@ class AwsSqsReceiver extends AwsBase {
 
     this._nowReceiving = true;
 
-    const rcvParams: SQS.ReceiveMessageRequest = {
+    const rcvParams: AWS_SQS.ReceiveMessageRequest = {
       QueueUrl: this._queue,
       AttributeNames: ["All"],
       MaxNumberOfMessages: MIN_BATCH_SIZE,
@@ -104,19 +172,16 @@ class AwsSqsReceiver extends AwsBase {
     return await this.receiveMessage(JSON.parse(msgs));
   }
 
-  private async receiveMessage(msgs: SQS.Message[]): Promise<number> {
+  private async receiveMessage(msgs: AWS_SQS.Message[]): Promise<number> {
     // Check if we are currently recording a playback
     if (this._playbackFile !== "") {
-      this.writePlayback(
-        JSON.stringify(msgs),
-        AwsBase.RecordTypes.SQS_RECEIVER,
-      );
+      this.writePlayback(JSON.stringify(msgs), Base.RecordTypes.SQS_RECEIVER);
     }
 
     // Process msgs in a batch
     let msgsProcessed = await this._processMessages(msgs);
 
-    let delParams: SQS.DeleteMessageBatchRequest = {
+    let delParams: AWS_SQS.DeleteMessageBatchRequest = {
       QueueUrl: this._queue,
       Entries: [],
     };
@@ -126,7 +191,7 @@ class AwsSqsReceiver extends AwsBase {
       delParams.Entries.push({
         Id: `${i}`,
         ReceiptHandle: msgs[i].ReceiptHandle,
-      } as SQS.DeleteMessageBatchRequestEntry);
+      } as AWS_SQS.DeleteMessageBatchRequestEntry);
     }
 
     // Delete the messages that have been processed
@@ -168,5 +233,3 @@ class AwsSqsReceiver extends AwsBase {
     return true;
   }
 }
-
-export { AwsSqsReceiver, AwsSqsReceiverOpts };

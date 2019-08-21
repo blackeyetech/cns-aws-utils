@@ -1,6 +1,6 @@
 // imports here
-import { AwsBase, AwsOpts } from "./aws-base";
-import SNS from "aws-sdk/clients/sns";
+import * as Aws from "./aws-base";
+import AWS_SNS from "aws-sdk/clients/sns";
 
 // import AWS from "aws-sdk/global";
 // AWS.config.logger = console;
@@ -9,25 +9,25 @@ import SNS from "aws-sdk/clients/sns";
 const SNS_API_VER = "2010-03-31";
 
 // Interfaces here
-interface AwsSnsOpts extends AwsOpts {
+export interface Opts extends Aws.Opts {
   publishTopic: string;
 }
 
 // Class AwsSns here
-class AwsSns extends AwsBase {
+export class SNS extends Aws.Base {
   // Properties here
   private readonly _publishTopic: string;
-  private _sns: SNS;
+  private _sns: AWS_SNS;
 
   // Constructor here
-  constructor(name: string, opts: AwsSnsOpts) {
+  constructor(name: string, opts: Opts) {
     super(name, opts);
 
     this._publishTopic = opts.publishTopic;
     this.info("Publish Topic: %s", this._publishTopic);
 
     // Create AWS service objects
-    this._sns = new SNS({ region: this._region, apiVersion: SNS_API_VER });
+    this._sns = new AWS_SNS({ region: this._region, apiVersion: SNS_API_VER });
   }
 
   // Public and Private methods here
@@ -48,7 +48,7 @@ class AwsSns extends AwsBase {
 
   async publishMessage(
     msg: string,
-    attribs?: SNS.MessageAttributeMap,
+    attribs?: AWS_SNS.MessageAttributeMap,
   ): Promise<boolean> {
     let pubParams = {
       TopicArn: this._publishTopic,
@@ -69,12 +69,10 @@ class AwsSns extends AwsBase {
     if (this._playbackFile !== "") {
       this.writePlayback(
         JSON.stringify({ msg, attribs }),
-        AwsBase.RecordTypes.SNS,
+        Aws.Base.RecordTypes.SNS,
       );
     }
 
     return success;
   }
 }
-
-export { AwsSns, AwsSnsOpts };
