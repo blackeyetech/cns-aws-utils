@@ -14,7 +14,7 @@ export interface Opts extends Aws.Opts {
 }
 
 // Class AwsSns here
-export class SNS extends Aws.Base {
+export class Topic extends Aws.Base {
   // Properties here
   private readonly _publishTopic: string;
   private _sns: AWS_SNS;
@@ -43,10 +43,10 @@ export class SNS extends Aws.Base {
 
   async injectMessage(msg: string): Promise<boolean> {
     let parsed: any = JSON.parse(msg);
-    return await this.publishMessage(parsed.msg, parsed.attribs);
+    return await this.publish(parsed.msg, parsed.attribs);
   }
 
-  async publishMessage(
+  async publish(
     msg: string,
     attribs?: AWS_SNS.MessageAttributeMap,
   ): Promise<boolean> {

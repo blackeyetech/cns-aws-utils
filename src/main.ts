@@ -15,7 +15,7 @@ import * as fs from "fs";
 class Utils extends CNShell {
   // Properties here
   private _queues: Map<string, SQS.Sender | SQS.Receiver>;
-  private _topics: Map<string, SNS.SNS>;
+  private _topics: Map<string, SNS.Topic>;
   private _tables: Map<string, DDB.Table>;
 
   // Constructor here
@@ -87,14 +87,14 @@ class Utils extends CNShell {
     return queue;
   }
 
-  addSnsPublisher(name: string, opts: SNS.Opts): SNS.SNS {
+  addSnsTopic(name: string, opts: SNS.Opts): SNS.Topic {
     if (this._topics.has(name)) {
       throw new Error(
         `addSnsTopic: Topic with the name ${name} already exists!`,
       );
     }
 
-    let sns = new SNS.SNS(name, opts);
+    let sns = new SNS.Topic(name, opts);
 
     this.info(`Adding SNS Topic: ${name}`);
     this._topics.set(name, sns);
