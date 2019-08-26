@@ -1,5 +1,5 @@
 {
-  "version": "1.6.1",
+  "version": "1.6.2",
   "name": "@cn-shell/aws-utils",
   "description": "A Cloud Native extension for AWS",
   "main": "./dist/main.js",
