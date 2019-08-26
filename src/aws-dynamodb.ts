@@ -91,10 +91,17 @@ export class Table extends Aws.Base {
       .batchWrite(params)
       .promise()
       .catch(e => {
-        this.error("putIems (Table: %s) Error: (%s)", this._table, e);
+        this.error(
+          "putIems (Table: %s) Error: (%s). Params: (%j)",
+          this._table,
+          e,
+          params,
+        );
         success = false;
       });
 
+    // TODO: Need to ensure there are no more then 25 items being passed
+    // and check for unprocessed items
     return success;
   }
 
@@ -224,7 +231,12 @@ export class Table extends Aws.Base {
       .update(params)
       .promise()
       .catch(e => {
-        this.error("updateItem (Table: %s) Error: (%s)", this._table, e);
+        this.error(
+          "updateItem (Table: %s) Error: (%s). Params: (%j)",
+          this._table,
+          e,
+          params,
+        );
         success = false;
       });
 
