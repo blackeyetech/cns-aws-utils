@@ -92,8 +92,9 @@ export class Table extends Aws.Base {
       .promise()
       .catch(e => {
         this.error(
-          "putIems (Table: %s) Error: (%s). Params: (%j)",
+          "putIems (Table: %s) Error: (%s: %s).",
           this._table,
+          e.code,
           e,
           params,
         );
@@ -232,8 +233,9 @@ export class Table extends Aws.Base {
       .promise()
       .catch(e => {
         this.error(
-          "updateItem (Table: %s) Error: (%s). Params: (%j)",
+          "updateItem (Table: %s) Error: (%s: %s). Params: (%j)",
           this._table,
+          e.code,
           e,
           params,
         );
