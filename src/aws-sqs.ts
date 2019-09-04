@@ -181,6 +181,10 @@ export class Receiver extends Base {
     // Process msgs in a batch
     let msgsProcessed = await this._processMessages(msgs);
 
+    if (msgsProcessed.length === 0) {
+      return 0;
+    }
+
     let delParams: AWS_SQS.DeleteMessageBatchRequest = {
       QueueUrl: this._queue,
       Entries: [],
