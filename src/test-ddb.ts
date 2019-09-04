@@ -1,7 +1,7 @@
 import CNShell from "cn-shell";
 import * as AWS from "./main";
 
-const table = process.env["TEST_TABLE"];
+const table = "AccountMasterData"; //process.env["TEST_TABLE"];
 
 class App extends CNShell {
   private _table1: AWS.DDB.Table;
@@ -48,12 +48,18 @@ class App extends CNShell {
 
   async queryTest() {
     let params: AWS.DDB.QueryParams = {
-      partitionKeyValue: "platform",
+      partitionKeyValue: "api-key",
     };
 
     let results = await this._table1.query(params);
 
-    console.log("%j", results);
+    for (let i in results.Items) {
+      let item = results.Items[i];
+
+      if (item.enabled) {
+        console.log("%j", item);
+      }
+    }
   }
 
   async updateTest() {
