@@ -53,7 +53,11 @@ class App extends CNShell {
 
     let results = await this._table1.query(params);
 
-    for (let i in results.Items) {
+    if (results.Items === undefined) {
+      return;
+    }
+
+    for (let i = 0; i < results.Items.length; i++) {
       let item = results.Items[i];
 
       if (item.enabled) {
