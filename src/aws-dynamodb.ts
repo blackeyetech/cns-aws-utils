@@ -145,13 +145,13 @@ export class Table extends Aws.Base {
           break;
         case "BETWEEN":
           if (query.sortCriteria.between !== undefined) {
-            expression += " and #s BETWEEN :low AND :high";
+            expression += " and #s between :low AND :high";
             values[":low"] = query.sortCriteria.between.low;
             values[":high"] = query.sortCriteria.between.high;
           }
           break;
         case "BEGINS_WITH":
-          expression += " and BEGINS_WITH(#s, :s)";
+          expression += " and begins_with(#s, :s)";
           values[":s"] = query.sortCriteria.value;
           break;
       }
