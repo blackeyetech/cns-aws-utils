@@ -187,20 +187,9 @@ export class Table extends Aws.Base {
           expression += ",";
         }
 
-        // Check if this is a map or not (a map will contain '.'s)
-        let map = key.split(".");
-        if (map.length === 1) {
-          names[`#${name}`] = key;
-          values[`:${name}`] = item.set[key];
-          expression += ` #${name} = :${name}`;
-        } else {
-          let first = map.slice(0, map.length - 1).join(".");
-          let second = map.slice(-1)[0];
-
-          names[`#${name}`] = second;
-          values[`:${name}`] = item.set[key];
-          expression += ` ${first}.#${name} = :${name}`;
-        }
+        names[`#${name}`] = key;
+        values[`:${name}`] = item.set[key];
+        expression += ` #${name} = :${name}`;
 
         nameCode++;
       }
@@ -214,20 +203,9 @@ export class Table extends Aws.Base {
           expression += ",";
         }
 
-        // Check if this is a map or not (a map will contain '.'s)
-        let map = key.split(".");
-        if (map.length === 1) {
-          names[`#${name}`] = key;
-          values[`:${name}`] = item.add[key];
-          expression += ` #${name} = #${name} + :${name}`;
-        } else {
-          let first = map.slice(0, map.length - 1).join(".");
-          let second = map.slice(-1)[0];
-
-          names[`#${second}`] = second;
-          values[`:${second}`] = item.add[key];
-          expression += ` ${first}.#${second} = ${first}.#${second} + :${second}`;
-        }
+        names[`#${name}`] = key;
+        values[`:${name}`] = item.add[key];
+        expression += ` #${name} = #${name} + :${name}`;
 
         nameCode++;
       }
