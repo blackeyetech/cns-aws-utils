@@ -229,6 +229,7 @@ export class Receiver extends Base {
       }, 1000);
     } else {
       this.info("Stopped receiving!");
+      this._stopNow = false;
       resolve();
     }
   }
