@@ -5,17 +5,15 @@ const table = "AccountMasterData"; //process.env["TEST_TABLE"];
 
 class App extends CNShell {
   private _table1: AWS.DDB.Table;
-  private _utils: AWS.Utils;
 
   constructor(name: string) {
     super(name);
 
-    this._utils = new AWS.Utils("aws-utils");
-
-    this._table1 = this._utils.addTable("TEST", {
+    this._table1 = new AWS.DDB.Table("AccountMasterData", {
       region: "eu-west-1",
       table: table === undefined ? "UNKNOWN" : table,
       partitionKey: "data_type",
+      sortKey: "data_key",
     });
   }
 
@@ -66,6 +64,30 @@ class App extends CNShell {
     }
   }
 
+  async queryTest2() {
+    let params: AWS.DDB.QueryParams = {
+      partitionKeyValue: "thing",
+      sortCriteria: {
+        operator: "EQ",
+        value: "CREEVX#POC-AC1#ORG-1#SITE-1#00137A10000033D1",
+      },
+    };
+
+    let results = await this._table1.query(params);
+
+    if (results.Items === undefined) {
+      return;
+    }
+
+    for (let i = 0; i < results.Items.length; i++) {
+      let item = results.Items[i];
+
+      if (item.enabled) {
+        console.log("%j", item);
+      }
+    }
+  }
+
   async updateTest() {
     let upParams: AWS.DDB.UpdateItemParams = {
       key: { partitionKeyValue: 1, sortKeyValue: 2 },
@@ -89,5 +111,5 @@ let app = new App("App");
 app.start();
 
 // app.putTest();
-app.queryTest();
+app.queryTest2();
 // app.updateTest();

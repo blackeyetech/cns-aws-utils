@@ -4,10 +4,12 @@ import { Base } from "./aws-base";
 import * as SQS from "./aws-sqs";
 import * as SNS from "./aws-sns";
 import * as DDB from "./aws-dynamodb";
+import * as Secrets from "./aws-secret";
 
 import AWS_SQS from "aws-sdk/clients/sqs";
 import AWS_SNS from "aws-sdk/clients/sns";
 import AWS_DDB from "aws-sdk/clients/dynamodb";
+import AWS_SecretsManager from "aws-sdk/clients/secretsmanager";
 
 import * as fs from "fs";
 
@@ -16,7 +18,6 @@ class Utils extends CNShell {
   // Properties here
   private _queues: Map<string, SQS.Sender | SQS.Receiver>;
   private _topics: Map<string, SNS.Topic>;
-  private _tables: Map<string, DDB.Table>;
 
   // Constructor here
   constructor(name: string) {
@@ -24,7 +25,6 @@ class Utils extends CNShell {
 
     this._queues = new Map();
     this._topics = new Map();
-    this._tables = new Map();
   }
 
   // Methods here
@@ -100,19 +100,6 @@ class Utils extends CNShell {
     this._topics.set(name, sns);
 
     return sns;
-  }
-
-  addTable(name: string, opts: DDB.Opts): DDB.Table {
-    if (this._tables.has(name)) {
-      throw new Error(`addTable: Table with the name ${name} already exists!`);
-    }
-
-    let table = new DDB.Table(name, opts);
-
-    this.info(`Adding DDB Table: ${name}`);
-    this._tables.set(name, table);
-
-    return table;
   }
 
   startRecording(playbackFile: string): void {
@@ -226,4 +213,14 @@ class Utils extends CNShell {
   }
 }
 
-export { Utils, SQS, SNS, DDB, AWS_SQS, AWS_SNS, AWS_DDB };
+export {
+  Utils,
+  SQS,
+  SNS,
+  DDB,
+  Secrets,
+  AWS_SQS,
+  AWS_SNS,
+  AWS_DDB,
+  AWS_SecretsManager,
+};
