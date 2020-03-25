@@ -15,7 +15,7 @@ class App extends CNShell {
   }
 
   async start(): Promise<boolean> {
-    let test = new AWS.Secrets.Secret("Secret", {
+    let test = new AWS.Secrets.Secret("Secretly", {
       secret: SecretARN === undefined ? "UNKNOWN" : SecretARN,
       region: "eu-west-1",
     });

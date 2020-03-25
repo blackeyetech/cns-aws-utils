@@ -54,7 +54,7 @@ export class Secret extends Aws.Base {
       .catch(e => {
         this.error(
           "setValue (Secret: %s) Error: (%s: %s).",
-          this._secret,
+          this.name,
           e.code,
           e,
         );
@@ -78,7 +78,7 @@ export class Secret extends Aws.Base {
       .catch(e => {
         this.error(
           "getValue (Secret: %s) Error: (%s: %s).",
-          this._secret,
+          this.name,
           e.code,
           e,
         );
