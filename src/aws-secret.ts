@@ -42,6 +42,35 @@ export class Secret extends Aws.Base {
     return true;
   }
 
+  async create(value: string, description: string): Promise<boolean> {
+    let success = true;
+
+    this.info("Creating secret (%s)", this.name);
+
+    await this._secretsManager
+      .createSecret({
+        Name: this.name,
+        Description: description,
+        SecretString: value,
+      })
+      .promise()
+      .catch(e => {
+        this.error(
+          "create (Secret: %s) Error: (%s: %s).",
+          this.name,
+          e.code,
+          e,
+        );
+        success = false;
+      });
+
+    if (success) {
+      return true;
+    }
+
+    return false;
+  }
+
   async setValue(value: string): Promise<boolean> {
     let success = true;
 
