@@ -1,7 +1,7 @@
 import CNShell from "cn-shell";
 import * as AWS from "./main";
 
-const table = "AccountMasterData"; //process.env["TEST_TABLE"];
+const table = "master_data"; //process.env["TEST_TABLE"];
 
 class App extends CNShell {
   private _table1: AWS.DDB.Table;
@@ -46,7 +46,7 @@ class App extends CNShell {
 
   async queryTest() {
     let params: AWS.DDB.QueryParams = {
-      partitionKeyValue: "api-key",
+      partitionKeyValue: "device-type",
     };
 
     let results = await this._table1.query(params);
@@ -58,9 +58,7 @@ class App extends CNShell {
     for (let i = 0; i < results.Items.length; i++) {
       let item = results.Items[i];
 
-      if (item.enabled) {
-        console.log("%j", item);
-      }
+      console.log("%j", item);
     }
   }
 
@@ -90,20 +88,25 @@ class App extends CNShell {
 
   async updateTest() {
     let upParams: AWS.DDB.UpdateItemParams = {
-      key: { partitionKeyValue: 1, sortKeyValue: 2 },
-      set: {
-        data: "something else",
+      key: { partitionKeyValue: "id", sortKeyValue: "site" },
+
+      add: {
+        id: 1,
       },
+      returnUpdated: true,
     };
 
-    await this._table1.updateItem(upParams);
-    let qryParams: AWS.DDB.QueryParams = {
-      partitionKeyValue: 1,
-    };
+    let res = await this._table1.updateItem(upParams);
+    this.info("%j", res);
+    // let qryParams: AWS.DDB.QueryParams = {
+    //   partitionKeyValue: "id",
+    //   sortCriteria: {
+    //     operator: "EQ",
+    //     value: "site",
+    //   },
+    // };
 
-    let results = await this._table1.query(qryParams);
-
-    console.log("%j", results);
+    // let results = await this._table1.query(qryParams);
   }
 }
 
@@ -111,5 +114,5 @@ let app = new App("App");
 app.start();
 
 // app.putTest();
-app.queryTest2();
-// app.updateTest();
+//app.queryTest();
+app.updateTest();

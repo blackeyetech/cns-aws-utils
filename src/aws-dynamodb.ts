@@ -20,6 +20,7 @@ export interface UpdateItemParams {
   key: { partitionKeyValue: any; sortKeyValue?: any };
   set?: { [key: string]: any };
   add?: { [key: string]: any };
+  returnUpdated?: boolean;
 }
 
 export interface SortKeyCriteria {
@@ -173,7 +174,9 @@ export class Table extends Aws.Base {
     return this.documentClient.query(params).promise();
   }
 
-  async updateItem(item: UpdateItemParams): Promise<boolean> {
+  async updateItem(
+    item: UpdateItemParams,
+  ): Promise<boolean | { [key: string]: any }> {
     let values: AWS_DDB.DocumentClient.ExpressionAttributeValueMap = {};
     let names: AWS_DDB.DocumentClient.ExpressionAttributeNameMap = {};
     let expression = "SET";
@@ -206,11 +209,13 @@ export class Table extends Aws.Base {
       }
     }
 
+    let startNameCode = nameCode;
+
     if (item.add !== undefined) {
       for (let key in item.add) {
         let name = String.fromCharCode(nameCode);
 
-        if (name !== "a") {
+        if (startNameCode !== nameCode) {
           expression += ",";
         }
 
@@ -242,6 +247,7 @@ export class Table extends Aws.Base {
       ExpressionAttributeValues: values,
       ExpressionAttributeNames: names,
       UpdateExpression: expression,
+      ReturnValues: "UPDATED_NEW",
     };
 
     if (this._sortKey !== undefined) {
@@ -250,7 +256,7 @@ export class Table extends Aws.Base {
 
     let success = true;
 
-    await this.documentClient
+    let res = await this.documentClient
       .update(params)
       .promise()
       .catch(e => {
@@ -263,6 +269,10 @@ export class Table extends Aws.Base {
         );
         success = false;
       });
+
+    if (success && item.returnUpdated === true && res !== undefined) {
+      return <{ [key: string]: any }>res.Attributes;
+    }
 
     return success;
   }
