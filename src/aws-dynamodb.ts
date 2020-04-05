@@ -264,12 +264,15 @@ export class Table extends Aws.Base {
       ExpressionAttributeValues: values,
       ExpressionAttributeNames: names,
       UpdateExpression: expression,
-      ConditionExpression: conditionExpression,
       ReturnValues: "UPDATED_NEW",
     };
 
     if (this._sortKey !== undefined) {
       params.Key[this._sortKey] = item.key.sortKeyValue;
+    }
+
+    if (conditionExpression.length !== 0) {
+      params.ConditionExpression = conditionExpression;
     }
 
     let success = true;
