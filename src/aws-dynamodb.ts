@@ -20,6 +20,10 @@ export interface UpdateItemParams {
   key: { partitionKeyValue: any; sortKeyValue?: any };
   set?: { [key: string]: any };
   add?: { [key: string]: any };
+  condition?: {
+    exists: boolean;
+    attribute: string;
+  };
   returnUpdated?: boolean;
 }
 
@@ -209,13 +213,11 @@ export class Table extends Aws.Base {
       }
     }
 
-    let startNameCode = nameCode;
-
     if (item.add !== undefined) {
       for (let key in item.add) {
         let name = String.fromCharCode(nameCode);
 
-        if (startNameCode !== nameCode) {
+        if (name !== "a") {
           expression += ",";
         }
 
@@ -238,6 +240,21 @@ export class Table extends Aws.Base {
       }
     }
 
+    let conditionExpression = "";
+
+    if (item.condition !== undefined) {
+      let name = String.fromCharCode(nameCode);
+
+      names[`#${name}`] = item.condition.attribute;
+      if (item.condition.exists) {
+        conditionExpression = `attribute_exists(#${name})`;
+      } else {
+        conditionExpression = `attribute_not_exists(#${name})`;
+      }
+
+      nameCode++;
+    }
+
     let params: AWS_DDB.DocumentClient.UpdateItemInput = {
       TableName: this._table,
       Key: {
@@ -247,6 +264,7 @@ export class Table extends Aws.Base {
       ExpressionAttributeValues: values,
       ExpressionAttributeNames: names,
       UpdateExpression: expression,
+      ConditionExpression: conditionExpression,
       ReturnValues: "UPDATED_NEW",
     };
 
