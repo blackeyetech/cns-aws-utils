@@ -20,6 +20,7 @@ export interface UpdateItemParams {
   key: { partitionKeyValue: any; sortKeyValue?: any };
   set?: { [key: string]: any };
   add?: { [key: string]: any };
+  remove?: string[];
   condition?: {
     exists: boolean;
     attribute: string;
@@ -183,13 +184,15 @@ export class Table extends Aws.Base {
   ): Promise<boolean | { [key: string]: any }> {
     let values: AWS_DDB.DocumentClient.ExpressionAttributeValueMap = {};
     let names: AWS_DDB.DocumentClient.ExpressionAttributeNameMap = {};
-    let expression = "SET";
-    let nameCode = "a".charCodeAt(0);
+    let expression = "";
+    let name = "a";
+    let nameCode = name.charCodeAt(0);
 
     if (item.set !== undefined) {
-      for (let key in item.set) {
-        let name = String.fromCharCode(nameCode);
+      expression = "SET";
 
+      for (let key in item.set) {
+        name = String.fromCharCode(nameCode);
         if (name !== "a") {
           expression += ",";
         }
@@ -214,9 +217,12 @@ export class Table extends Aws.Base {
     }
 
     if (item.add !== undefined) {
-      for (let key in item.add) {
-        let name = String.fromCharCode(nameCode);
+      if (expression.length === 0) {
+        expression = "SET";
+      }
 
+      for (let key in item.add) {
+        name = String.fromCharCode(nameCode);
         if (name !== "a") {
           expression += ",";
         }
@@ -234,6 +240,34 @@ export class Table extends Aws.Base {
           names[`#${second}`] = second;
           values[`:${second}`] = item.add[key];
           expression += ` ${first}.#${second} = ${first}.#${second} + :${second}`;
+        }
+
+        nameCode++;
+      }
+    }
+
+    let startName = String.fromCharCode(nameCode);
+
+    if (item.remove !== undefined && item.remove.length) {
+      expression += " REMOVE";
+      for (let key of item.remove) {
+        name = String.fromCharCode(nameCode);
+
+        if (name !== startName) {
+          expression += ",";
+        }
+
+        // Check if this is a map or not (a map will contain '.'s)
+        let map = key.split(".");
+        if (map.length === 1) {
+          names[`#${name}`] = key;
+          expression += ` #${name} `;
+        } else {
+          let first = map.slice(0, map.length - 1).join(".");
+          let second = map.slice(-1)[0];
+
+          names[`#${name}`] = second;
+          expression += ` ${first}.#${name}`;
         }
 
         nameCode++;
@@ -261,7 +295,6 @@ export class Table extends Aws.Base {
         [this._partitionKey]: item.key.partitionKeyValue,
       },
 
-      ExpressionAttributeValues: values,
       ExpressionAttributeNames: names,
       UpdateExpression: expression,
       ReturnValues: "UPDATED_NEW",
@@ -275,6 +308,11 @@ export class Table extends Aws.Base {
       params.ConditionExpression = conditionExpression;
     }
 
+    if (Object.entries(values).length) {
+      params.ExpressionAttributeValues = values;
+    }
+
+    this.info("%j", params);
     let success = true;
 
     let res = await this.documentClient

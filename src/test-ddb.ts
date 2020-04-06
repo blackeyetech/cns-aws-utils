@@ -28,20 +28,24 @@ class App extends CNShell {
   }
 
   async putTest() {
-    for (let key = 0; key < 1000000; key++) {
-      await this._table1.putItems([
-        { key, sort: 1, data: "something" },
-        { key, sort: 2, data: "something" },
-        { key, sort: 3, data: "something" },
-        { key, sort: 4, data: "something" },
-        { key, sort: 5, data: "something" },
-        { key, sort: 6, data: "something" },
-        { key, sort: 7, data: "something" },
-        { key, sort: 8, data: "something" },
-        { key, sort: 9, data: "something" },
-        { key, sort: 10, data: "something" },
-      ]);
-    }
+    await this._table1.putItems([
+      {
+        data_type: "asset",
+        data_key: "xxx",
+        monitors: {},
+      },
+    ]);
+
+    let qryParams: AWS.DDB.QueryParams = {
+      partitionKeyValue: "asset",
+      sortCriteria: {
+        operator: "EQ",
+        value: "xxx",
+      },
+    };
+
+    let results = await this._table1.query(qryParams);
+    this.info("%j", results);
   }
 
   async queryTest() {
@@ -87,37 +91,54 @@ class App extends CNShell {
   }
 
   async updateTest() {
+    let m = "monitors";
+    let set = <{ [key: string]: any }>{};
+    set[`${m}.FLOW`] = "flow";
+    set[`${m}.RET`] = "ret";
+    set[`${m}.counter`] = 0;
+
     let upParams: AWS.DDB.UpdateItemParams = {
-      key: { partitionKeyValue: "counter", sortKeyValue: "sites" },
+      key: { partitionKeyValue: "asset", sortKeyValue: "xxx" },
+      set,
+    };
 
-      set: {
-        counter: 1,
-      },
+    await this._table1.updateItem(upParams);
 
-      returnUpdated: true,
-      condition: {
-        attribute: "counter",
-        exists: true,
+    let qryParams: AWS.DDB.QueryParams = {
+      partitionKeyValue: "asset",
+      sortCriteria: {
+        operator: "EQ",
+        value: "xxx",
       },
     };
 
-    let res = await this._table1.updateItem(upParams);
-    this.info("%j", res);
-    // let qryParams: AWS.DDB.QueryParams = {
-    //   partitionKeyValue: "id",
-    //   sortCriteria: {
-    //     operator: "EQ",
-    //     value: "site",
-    //   },
-    // };
+    let results = await this._table1.query(qryParams);
+    this.info("%j", results);
 
-    // let results = await this._table1.query(qryParams);
+    let add = <{ [key: string]: any }>{};
+    add[`${m}.counter`] = 1;
+    set = {};
+    set[`${m}.counter2`] = 0;
+
+    upParams = {
+      key: { partitionKeyValue: "asset", sortKeyValue: "xxx" },
+      add,
+      set,
+      remove: [`${m}.RET`],
+    };
+
+    await this._table1.updateItem(upParams);
+
+    results = await this._table1.query(qryParams);
+    this.info("%j", results);
   }
 }
 
 let app = new App("App");
 app.start();
 
-// app.putTest();
-//app.queryTest();
-app.updateTest();
+(async () => {
+  await app.putTest();
+  //app.queryTest();
+  await app.updateTest();
+})();
