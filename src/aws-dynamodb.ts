@@ -312,13 +312,21 @@ export class Table extends Aws.Base {
       params.ExpressionAttributeValues = values;
     }
 
-    this.info("%j", params);
+    this.debug("%j", params);
     let success = true;
 
     let res = await this.documentClient
       .update(params)
       .promise()
       .catch(e => {
+        // Check if this is just because the condition failed
+        if (
+          e.code === "ConditionalCheckFailedException" &&
+          item.condition !== undefined
+        ) {
+          return;
+        }
+
         this.error(
           "updateItem (Table: %s) Error: (%s: %s). Params: (%j)",
           this._table,

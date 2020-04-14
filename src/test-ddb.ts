@@ -1,7 +1,7 @@
 import CNShell from "cn-shell";
 import * as AWS from "./main";
 
-const table = "master_data"; //process.env["TEST_TABLE"];
+const table = "Measurements"; //process.env["TEST_TABLE"];
 
 class App extends CNShell {
   private _table1: AWS.DDB.Table;
@@ -9,11 +9,11 @@ class App extends CNShell {
   constructor(name: string) {
     super(name);
 
-    this._table1 = new AWS.DDB.Table("AccountMasterData", {
+    this._table1 = new AWS.DDB.Table("Measurements", {
       region: "eu-west-1",
       table: table === undefined ? "UNKNOWN" : table,
-      partitionKey: "data_type",
-      sortKey: "data_key",
+      partitionKey: "monitor",
+      sortKey: "ts",
     });
   }
 
@@ -50,7 +50,7 @@ class App extends CNShell {
 
   async queryTest() {
     let params: AWS.DDB.QueryParams = {
-      partitionKeyValue: "device-type",
+      partitionKeyValue: "PHWATER#GLFDCO#LEGION#COLD#COLD7#WATER",
     };
 
     let results = await this._table1.query(params);
@@ -59,11 +59,11 @@ class App extends CNShell {
       return;
     }
 
-    for (let i = 0; i < results.Items.length; i++) {
-      let item = results.Items[i];
+    // for (let i = 0; i < results.Items.length; i++) {
+    //   let item = results.Items[i];
 
-      console.log("%j", item);
-    }
+    //   console.log("%j", item);
+    // }
   }
 
   async queryTest2() {
@@ -138,7 +138,7 @@ let app = new App("App");
 app.start();
 
 (async () => {
-  await app.putTest();
-  //app.queryTest();
-  await app.updateTest();
+  // await app.putTest();
+  app.queryTest();
+  // await app.updateTest();
 })();
