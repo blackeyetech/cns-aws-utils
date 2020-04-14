@@ -319,6 +319,8 @@ export class Table extends Aws.Base {
       .update(params)
       .promise()
       .catch(e => {
+        success = false;
+
         // Check if this is just because the condition failed
         if (
           e.code === "ConditionalCheckFailedException" &&
@@ -334,7 +336,6 @@ export class Table extends Aws.Base {
           e,
           params,
         );
-        success = false;
       });
 
     if (success && item.returnUpdated === true && res !== undefined) {
