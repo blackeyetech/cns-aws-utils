@@ -25,7 +25,7 @@ export interface UpdateItemParams {
     exists: boolean;
     attribute: string;
   };
-  returnUpdated?: boolean;
+  returnUpdated?: string;
 }
 
 export interface SortKeyCriteria {
@@ -297,7 +297,7 @@ export class Table extends Aws.Base {
 
       ExpressionAttributeNames: names,
       UpdateExpression: expression,
-      ReturnValues: "ALL_NEW",
+      ReturnValues: item.returnUpdated,
     };
 
     if (this._sortKey !== undefined) {
@@ -338,7 +338,7 @@ export class Table extends Aws.Base {
         );
       });
 
-    if (success && item.returnUpdated === true && res !== undefined) {
+    if (success && item.returnUpdated !== undefined && res !== undefined) {
       return <{ [key: string]: any }>res.Attributes;
     }
 

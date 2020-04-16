@@ -99,15 +99,6 @@ class App extends CNShell {
   }
 
   async updateTest() {
-    let qryParams: AWS.DDB.QueryParams = {
-      partitionKeyValue: "asset",
-      sortCriteria: {
-        operator: "EQ",
-        value: "xxx",
-      },
-    };
-    await this._table1.query(qryParams);
-
     let m = "monitors";
     let set = <{ [key: string]: any }>{};
     set[`${m}.FLOW`] = "flow";
@@ -119,48 +110,36 @@ class App extends CNShell {
       set,
     };
 
-    console.time("first");
-    await this._table1.updateItem(upParams);
-    console.timeEnd("first");
+    let res1 = await this._table1.updateItem(upParams);
+    this.info("%j", res1);
 
-    await sleep(300000);
+    let qryParams: AWS.DDB.QueryParams = {
+      partitionKeyValue: "asset",
+      sortCriteria: {
+        operator: "EQ",
+        value: "xxx",
+      },
+    };
 
-    console.time("first");
-    await this._table1.updateItem(upParams);
-    console.timeEnd("first");
+    let results = await this._table1.query(qryParams);
 
-    // let qryParams: AWS.DDB.QueryParams = {
-    //   partitionKeyValue: "asset",
-    //   sortCriteria: {
-    //     operator: "EQ",
-    //     value: "xxx",
-    //   },
-    // };
+    this.info("%j", results);
 
-    // console.time("end");
-    // let results = await this._table1.query(qryParams);
-    // console.timeEnd("end");
+    let add = <{ [key: string]: any }>{};
+    add[`${m}.counter`] = 1;
+    set = {};
+    set[`${m}.counter2`] = 0;
 
-    // this.info("%j", results);
+    upParams = {
+      key: { partitionKeyValue: "asset", sortKeyValue: "xxx" },
+      add,
+      set,
+      remove: [`${m}.RET`],
+      returnUpdated: "UPDATED_NEW",
+    };
 
-    // let add = <{ [key: string]: any }>{};
-    // add[`${m}.counter`] = 1;
-    // set = {};
-    // set[`${m}.counter2`] = 0;
-
-    // upParams = {
-    //   key: { partitionKeyValue: "asset", sortKeyValue: "xxx" },
-    //   add,
-    //   set,
-    //   remove: [`${m}.RET`],
-    //   returnUpdated: true,
-    // };
-
-    // let results2 = await this._table1.updateItem(upParams);
-    // this.info("%j", results2);
-
-    // results = await this._table1.query(qryParams);
-    // this.info("%j", results);
+    let results2 = await this._table1.updateItem(upParams);
+    this.info("%j", results2);
   }
 }
 
