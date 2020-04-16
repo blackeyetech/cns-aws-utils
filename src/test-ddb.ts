@@ -140,6 +140,8 @@ class App extends CNShell {
 
     let results2 = await this._table1.updateItem(upParams);
     this.info("%j", results2);
+
+    sleep(1000);
   }
 }
 
