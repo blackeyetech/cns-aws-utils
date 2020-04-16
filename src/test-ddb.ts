@@ -1,7 +1,7 @@
 import CNShell from "cn-shell";
 import * as AWS from "./main";
 
-const table = "Measurements"; //process.env["TEST_TABLE"];
+const table = "master_data"; //process.env["TEST_TABLE"];
 
 class App extends CNShell {
   private _table1: AWS.DDB.Table;
@@ -12,8 +12,8 @@ class App extends CNShell {
     this._table1 = new AWS.DDB.Table("Measurements", {
       region: "eu-west-1",
       table: table === undefined ? "UNKNOWN" : table,
-      partitionKey: "monitor",
-      sortKey: "ts",
+      partitionKey: "data_type",
+      sortKey: "data_key",
     });
   }
 
@@ -49,8 +49,14 @@ class App extends CNShell {
   }
 
   async queryTest() {
+    console.time("Starting");
+
     let params: AWS.DDB.QueryParams = {
       partitionKeyValue: "PHWATER#GLFDCO#LEGION#COLD#COLD7#WATER",
+      // sortCriteria: {
+      //   operator: "GT",
+      //   value: Date.now() - 24 * 60 * 60 * 1000 * 15,
+      // },
     };
 
     let results = await this._table1.query(params);
@@ -59,6 +65,8 @@ class App extends CNShell {
       return;
     }
 
+    console.timeEnd("Starting");
+    console.info(results.Items.length);
     // for (let i = 0; i < results.Items.length; i++) {
     //   let item = results.Items[i];
 
@@ -91,6 +99,15 @@ class App extends CNShell {
   }
 
   async updateTest() {
+    let qryParams: AWS.DDB.QueryParams = {
+      partitionKeyValue: "asset",
+      sortCriteria: {
+        operator: "EQ",
+        value: "xxx",
+      },
+    };
+    await this._table1.query(qryParams);
+
     let m = "monitors";
     let set = <{ [key: string]: any }>{};
     set[`${m}.FLOW`] = "flow";
@@ -102,36 +119,55 @@ class App extends CNShell {
       set,
     };
 
+    console.time("first");
     await this._table1.updateItem(upParams);
+    console.timeEnd("first");
 
-    let qryParams: AWS.DDB.QueryParams = {
-      partitionKeyValue: "asset",
-      sortCriteria: {
-        operator: "EQ",
-        value: "xxx",
-      },
-    };
+    await sleep(300000);
 
-    let results = await this._table1.query(qryParams);
-    this.info("%j", results);
-
-    let add = <{ [key: string]: any }>{};
-    add[`${m}.counter`] = 1;
-    set = {};
-    set[`${m}.counter2`] = 0;
-
-    upParams = {
-      key: { partitionKeyValue: "asset", sortKeyValue: "xxx" },
-      add,
-      set,
-      remove: [`${m}.RET`],
-    };
-
+    console.time("first");
     await this._table1.updateItem(upParams);
+    console.timeEnd("first");
 
-    results = await this._table1.query(qryParams);
-    this.info("%j", results);
+    // let qryParams: AWS.DDB.QueryParams = {
+    //   partitionKeyValue: "asset",
+    //   sortCriteria: {
+    //     operator: "EQ",
+    //     value: "xxx",
+    //   },
+    // };
+
+    // console.time("end");
+    // let results = await this._table1.query(qryParams);
+    // console.timeEnd("end");
+
+    // this.info("%j", results);
+
+    // let add = <{ [key: string]: any }>{};
+    // add[`${m}.counter`] = 1;
+    // set = {};
+    // set[`${m}.counter2`] = 0;
+
+    // upParams = {
+    //   key: { partitionKeyValue: "asset", sortKeyValue: "xxx" },
+    //   add,
+    //   set,
+    //   remove: [`${m}.RET`],
+    //   returnUpdated: true,
+    // };
+
+    // let results2 = await this._table1.updateItem(upParams);
+    // this.info("%j", results2);
+
+    // results = await this._table1.query(qryParams);
+    // this.info("%j", results);
   }
+}
+
+async function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => {
+    setTimeout(resolve, ms);
+  });
 }
 
 let app = new App("App");
@@ -139,6 +175,6 @@ app.start();
 
 (async () => {
   // await app.putTest();
-  app.queryTest();
-  // await app.updateTest();
+  // await app.queryTest();
+  await app.updateTest();
 })();

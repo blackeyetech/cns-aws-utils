@@ -297,7 +297,7 @@ export class Table extends Aws.Base {
 
       ExpressionAttributeNames: names,
       UpdateExpression: expression,
-      ReturnValues: "UPDATED_NEW",
+      ReturnValues: "ALL_NEW",
     };
 
     if (this._sortKey !== undefined) {
