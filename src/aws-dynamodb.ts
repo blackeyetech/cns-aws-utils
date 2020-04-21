@@ -7,6 +7,7 @@ import AWS_DDB from "aws-sdk/clients/dynamodb";
 
 // DynamoDB consts here
 const DDB_API_VER = "2012-08-10";
+const DDB_COUNTER = "counter";
 
 // Interfaces here
 export interface Opts extends Aws.Opts {
@@ -343,5 +344,43 @@ export class Table extends Aws.Base {
     }
 
     return success;
+  }
+
+  async getNextAtomicCounter(
+    counter: string,
+    counterKey: string = DDB_COUNTER,
+  ): Promise<string> {
+    // Update the current value - if the counter exists
+    let upParams = <UpdateItemParams>{
+      key: { partitionKeyValue: counterKey, sortKeyValue: counter },
+      add: { counter: 1 },
+      condition: {
+        attribute: counterKey,
+        exists: true,
+      },
+      returnUpdated: "UPDATED_NEW",
+    };
+
+    let attribs = await this.updateItem(upParams);
+
+    if (typeof attribs === "object" && attribs[counterKey] !== undefined) {
+      // return next value
+      return attribs[counterKey].toString();
+    }
+
+    // Otherwise - create the counter and set it to 1
+    upParams = {
+      key: { partitionKeyValue: counterKey, sortKeyValue: counter },
+      set: { [counterKey]: 1 },
+      condition: { attribute: counterKey, exists: false },
+    };
+
+    let created = await this.updateItem(upParams);
+
+    if (created === false) {
+      return "";
+    }
+
+    return "1";
   }
 }

@@ -99,11 +99,10 @@ class App extends CNShell {
   }
 
   async updateTest() {
-    let m = "monitors";
+    let m = "m";
     let set = <{ [key: string]: any }>{};
-    set[`${m}.FLOW`] = "flow";
-    set[`${m}.RET`] = "ret";
-    set[`${m}.counter`] = 0;
+    set[`${m}.d1.RET.flow`] = 0;
+    set[`${m}.d1.RET.max`] = 0;
 
     let upParams: AWS.DDB.UpdateItemParams = {
       key: { partitionKeyValue: "asset", sortKeyValue: "xxx" },
@@ -113,35 +112,43 @@ class App extends CNShell {
     let res1 = await this._table1.updateItem(upParams);
     this.info("%j", res1);
 
-    let qryParams: AWS.DDB.QueryParams = {
-      partitionKeyValue: "asset",
-      sortCriteria: {
-        operator: "EQ",
-        value: "xxx",
-      },
-    };
+    // let qryParams: AWS.DDB.QueryParams = {
+    //   partitionKeyValue: "asset",
+    //   sortCriteria: {
+    //     operator: "EQ",
+    //     value: "xxx",
+    //   },
+    // };
 
-    let results = await this._table1.query(qryParams);
+    // let results = await this._table1.query(qryParams);
 
-    this.info("%j", results);
+    // this.info("%j", results);
 
-    let add = <{ [key: string]: any }>{};
-    add[`${m}.counter`] = 1;
-    set = {};
-    set[`${m}.counter2`] = 0;
+    // let add = <{ [key: string]: any }>{};
+    // add[`${m}.counter`] = 1;
+    // set = {};
+    // set[`${m}.counter2`] = 0;
 
-    upParams = {
-      key: { partitionKeyValue: "asset", sortKeyValue: "xxx" },
-      add,
-      set,
-      remove: [`${m}.RET`],
-      returnUpdated: "UPDATED_NEW",
-    };
+    // upParams = {
+    //   key: { partitionKeyValue: "asset", sortKeyValue: "xxx" },
+    //   add,
+    //   set,
+    //   remove: [`${m}.RET`],
+    //   returnUpdated: "UPDATED_NEW",
+    // };
 
-    let results2 = await this._table1.updateItem(upParams);
-    this.info("%j", results2);
+    // let results2 = await this._table1.updateItem(upParams);
+    // this.info("%j", results2);
 
-    sleep(1000);
+    // sleep(1000);
+  }
+
+  async counterTest() {
+    let value = await this._table1.getNextAtomicCounter("atomic1");
+
+    console.log("counter: %s", value);
+
+    sleep(1);
   }
 }
 
@@ -157,5 +164,6 @@ app.start();
 (async () => {
   // await app.putTest();
   // await app.queryTest();
-  await app.updateTest();
+  // await app.updateTest();
+  await app.counterTest();
 })();
