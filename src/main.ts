@@ -5,11 +5,13 @@ import * as SQS from "./aws-sqs";
 import * as SNS from "./aws-sns";
 import * as DDB from "./aws-dynamodb";
 import * as Secrets from "./aws-secret";
+import * as Firehose from "./aws-firehose";
 
 import AWS_SQS from "aws-sdk/clients/sqs";
 import AWS_SNS from "aws-sdk/clients/sns";
 import AWS_DDB from "aws-sdk/clients/dynamodb";
 import AWS_SecretsManager from "aws-sdk/clients/secretsmanager";
+import AWS_Firehose from "aws-sdk/clients/firehose";
 
 import * as fs from "fs";
 
@@ -18,6 +20,7 @@ class Utils extends CNShell {
   // Properties here
   private _queues: Map<string, SQS.Sender | SQS.Receiver>;
   private _topics: Map<string, SNS.Topic>;
+  private _firehoseStreams: Map<string, Firehose.FirehoseStream>;
 
   // Constructor here
   constructor(name: string) {
@@ -25,6 +28,7 @@ class Utils extends CNShell {
 
     this._queues = new Map();
     this._topics = new Map();
+    this._firehoseStreams = new Map();
   }
 
   // Methods here
@@ -102,6 +106,24 @@ class Utils extends CNShell {
     return sns;
   }
 
+  addFirehoseStream(
+    name: string,
+    opts: Firehose.Opts,
+  ): Firehose.FirehoseStream {
+    if (this._firehoseStreams.has(name)) {
+      throw new Error(
+        `addFirehoseStream: Stream with the name ${name} already exists!`,
+      );
+    }
+
+    let fhStream = new Firehose.FirehoseStream(name, opts);
+
+    this.info(`Adding Firehose Stream: ${name}`);
+    this._firehoseStreams.set(name, fhStream);
+
+    return fhStream;
+  }
+
   startRecording(playbackFile: string): void {
     for (let [, queue] of this._queues.entries()) {
       queue.startRecording(playbackFile);
@@ -109,6 +131,10 @@ class Utils extends CNShell {
 
     for (let [, topic] of this._topics.entries()) {
       topic.startRecording(playbackFile);
+    }
+
+    for (let [, stream] of this._firehoseStreams.entries()) {
+      stream.startRecording(playbackFile);
     }
   }
 
@@ -134,12 +160,21 @@ class Utils extends CNShell {
     }
   }
 
+  startRecordingFirehoseStreams(playbackFile: string): void {
+    for (let [, stream] of this._firehoseStreams.entries()) {
+      stream.startRecording(playbackFile);
+    }
+  }
+
   stopRecording(): void {
     for (let [, queue] of this._queues.entries()) {
       queue.stopRecording();
     }
     for (let [, topic] of this._topics.entries()) {
       topic.stopRecording();
+    }
+    for (let [, stream] of this._firehoseStreams.entries()) {
+      stream.stopRecording();
     }
   }
 
@@ -162,6 +197,12 @@ class Utils extends CNShell {
   stopRecordingSns(): void {
     for (let [, topic] of this._topics.entries()) {
       topic.stopRecording();
+    }
+  }
+
+  stopRecordingFirehoseStreams(): void {
+    for (let [, stream] of this._firehoseStreams.entries()) {
+      stream.stopRecording();
     }
   }
 
@@ -206,6 +247,14 @@ class Utils extends CNShell {
         }
 
         topic.injectMessage(record.msg);
+      } else if (record.type === Base.RecordTypes.FHS) {
+        let stream = this._firehoseStreams.get(record.name);
+
+        if (stream === undefined) {
+          continue;
+        }
+
+        stream.injectMessage(record.msg);
       }
     }
 
@@ -223,4 +272,5 @@ export {
   AWS_SNS,
   AWS_DDB,
   AWS_SecretsManager,
+  AWS_Firehose,
 };

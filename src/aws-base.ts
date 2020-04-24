@@ -7,16 +7,19 @@ const END_OF_FILE = "";
 const SQS_RCV_PLAYBACK_VER_1 = "SQS-RCV-V1";
 const SQS_SND_PLAYBACK_VER_1 = "SQS-SND-V1";
 const SNS_PLAYBACK_VER_1 = "SNS-V1";
+const FHS_PLAYBACK_VER_1 = "FH-V1";
 
 const SQS_RCV_CURRENT_PLAYBACK_VER = SQS_RCV_PLAYBACK_VER_1;
 const SQS_SND_CURRENT_PLAYBACK_VER = SQS_SND_PLAYBACK_VER_1;
 const SNS_CURRENT_PLAYBACK_VER = SNS_PLAYBACK_VER_1;
+const FHS_CURRENT_PLAYBACK_VER = FHS_PLAYBACK_VER_1;
 
 // Enums here
 enum RecordTypes {
   SNS,
   SQS_SENDER,
   SQS_RECEIVER,
+  FHS,
 }
 
 // Interfaces here
@@ -92,6 +95,17 @@ export abstract class Base extends CNShell {
             break;
         }
         break;
+      case RecordTypes.FHS:
+        // Check the current playback we should generate
+        switch (FHS_CURRENT_PLAYBACK_VER) {
+          case FHS_PLAYBACK_VER_1:
+            this.writePbFld(FHS_PLAYBACK_VER_1, "|");
+            this.writePbFld(this.name, "|");
+            this.writePbFld(Date.now().toString(), "|");
+            this.writePbFld(msg, "\n");
+            break;
+        }
+        break;
     }
   }
 
@@ -145,6 +159,13 @@ export abstract class Base extends CNShell {
       case SNS_PLAYBACK_VER_1:
         return {
           type: RecordTypes.SNS,
+          name: Base.getPbFld("name", fd, line),
+          ts: parseInt(Base.getPbFld("ts", fd, line), 10),
+          msg: Base.getPbFld("msg", fd, line),
+        };
+      case FHS_PLAYBACK_VER_1:
+        return {
+          type: RecordTypes.FHS,
           name: Base.getPbFld("name", fd, line),
           ts: parseInt(Base.getPbFld("ts", fd, line), 10),
           msg: Base.getPbFld("msg", fd, line),
