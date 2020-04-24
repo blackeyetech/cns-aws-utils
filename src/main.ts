@@ -268,6 +268,7 @@ export {
   SNS,
   DDB,
   Secrets,
+  Firehose,
   AWS_SQS,
   AWS_SNS,
   AWS_DDB,
