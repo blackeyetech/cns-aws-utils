@@ -9,11 +9,10 @@ class App extends CNShell {
   constructor(name: string) {
     super(name);
 
-    this._table1 = new AWS.DDB.Table("Measurements", {
+    this._table1 = new AWS.DDB.Table("GSI", {
       region: "eu-west-1",
-      table: table === undefined ? "UNKNOWN" : table,
+      table: table === undefined ? "UNKNOWN" : "master_data",
       partitionKey: "data_type",
-      sortKey: "data_key",
     });
   }
 
@@ -49,14 +48,13 @@ class App extends CNShell {
   }
 
   async queryTest() {
-    console.time("Starting");
-
     let params: AWS.DDB.QueryParams = {
-      partitionKeyValue: "PHWATER#GLFDCO#LEGION#COLD#COLD7#WATER",
+      partitionKeyValue: "device-type",
       // sortCriteria: {
       //   operator: "GT",
       //   value: Date.now() - 24 * 60 * 60 * 1000 * 15,
       // },
+      attributes: ["gateway", "sensors.type"],
     };
 
     let results = await this._table1.query(params);
@@ -65,8 +63,7 @@ class App extends CNShell {
       return;
     }
 
-    console.timeEnd("Starting");
-    console.info(results.Items.length);
+    console.info("%j", results.Items);
     // for (let i = 0; i < results.Items.length; i++) {
     //   let item = results.Items[i];
 
@@ -163,7 +160,7 @@ app.start();
 
 (async () => {
   // await app.putTest();
-  // await app.queryTest();
+  await app.queryTest();
   // await app.updateTest();
-  await app.counterTest();
+  // await app.counterTest();
 })();

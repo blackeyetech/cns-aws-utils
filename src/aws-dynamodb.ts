@@ -43,6 +43,8 @@ export interface QueryParams {
   limit?: number;
 
   nextKey?: AWS_DDB.DocumentClient.Key;
+
+  attributes?: string[];
 }
 
 // Class Table here
@@ -164,6 +166,24 @@ export class Table extends Aws.Base {
       }
     }
 
+    let attributes = "";
+    if (query.attributes !== undefined) {
+      let name = "a";
+      let nameCode = name.charCodeAt(0);
+
+      for (let attrib of query.attributes) {
+        name = String.fromCharCode(nameCode);
+        if (name !== "a") {
+          attributes += ",";
+        }
+
+        names[`#${name}`] = attrib;
+        attributes += `#${name}`;
+
+        nameCode++;
+      }
+    }
+
     let params: AWS_DDB.DocumentClient.QueryInput = {
       TableName: this._table,
       IndexName: this._tableIndex,
@@ -176,6 +196,12 @@ export class Table extends Aws.Base {
       ExpressionAttributeValues: values,
       ExpressionAttributeNames: names,
     };
+
+    if (attributes.length) {
+      params.ProjectionExpression = attributes;
+    }
+
+    this.info("%j", params);
 
     return this.documentClient.query(params).promise();
   }
