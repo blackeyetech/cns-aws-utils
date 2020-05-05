@@ -264,9 +264,9 @@ export class Table extends Aws.Base {
           let first = map.slice(0, map.length - 1).join(".");
           let second = map.slice(-1)[0];
 
-          names[`#${second}`] = second;
-          values[`:${second}`] = item.add[key];
-          expression += ` ${first}.#${second} = ${first}.#${second} + :${second}`;
+          names[`#${name}`] = second;
+          values[`:${name}`] = item.add[key];
+          expression += ` ${first}.#${name} = ${first}.#${name} + :${name}`;
         }
 
         nameCode++;
