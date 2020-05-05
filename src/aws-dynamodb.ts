@@ -21,7 +21,7 @@ export interface UpdateItemParams {
   key: { partitionKeyValue: any; sortKeyValue?: any };
   set?: { [key: string]: any };
   add?: { [key: string]: any };
-  append?: { [key: string]: any };
+  append?: { [key: string]: any[] };
   remove?: string[];
   condition?: {
     exists: boolean;
