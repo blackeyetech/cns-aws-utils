@@ -21,6 +21,7 @@ export interface UpdateItemParams {
   key: { partitionKeyValue: any; sortKeyValue?: any };
   set?: { [key: string]: any };
   add?: { [key: string]: any };
+  append?: { [key: string]: any };
   remove?: string[];
   condition?: {
     exists: boolean;
@@ -267,6 +268,36 @@ export class Table extends Aws.Base {
           names[`#${name}`] = second;
           values[`:${name}`] = item.add[key];
           expression += ` ${first}.#${name} = ${first}.#${name} + :${name}`;
+        }
+
+        nameCode++;
+      }
+    }
+
+    if (item.append !== undefined) {
+      if (expression.length === 0) {
+        expression = "SET";
+      }
+
+      for (let key in item.append) {
+        name = String.fromCharCode(nameCode);
+        if (name !== "a") {
+          expression += ",";
+        }
+
+        // Check if this is a map or not (a map will contain '.'s)
+        let map = key.split(".");
+        if (map.length === 1) {
+          names[`#${name}`] = key;
+          values[`:${name}`] = item.append[key];
+          expression += ` #${name} = list_append(#${name}, :${name})`;
+        } else {
+          let first = map.slice(0, map.length - 1).join(".");
+          let second = map.slice(-1)[0];
+
+          names[`#${name}`] = second;
+          values[`:${name}`] = item.append[key];
+          expression += ` ${first}.#${name} = list_append(${first}.#${name}, :${name})`;
         }
 
         nameCode++;

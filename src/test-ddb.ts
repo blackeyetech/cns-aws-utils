@@ -13,6 +13,7 @@ class App extends CNShell {
       region: "eu-west-1",
       table: table === undefined ? "UNKNOWN" : "master_data",
       partitionKey: "data_type",
+      sortKey: "data_key",
     });
   }
 
@@ -96,14 +97,12 @@ class App extends CNShell {
   }
 
   async updateTest() {
-    let m = "m";
-    let set = <{ [key: string]: any }>{};
-    set[`${m}.d1.RET.flow`] = 0;
-    set[`${m}.d1.RET.max`] = 0;
+    let set = { a: "aaa", b: "bbbb" };
 
     let upParams: AWS.DDB.UpdateItemParams = {
       key: { partitionKeyValue: "asset", sortKeyValue: "xxx" },
       set,
+      append: { "m.l": 1 },
     };
 
     let res1 = await this._table1.updateItem(upParams);
@@ -160,7 +159,7 @@ app.start();
 
 (async () => {
   // await app.putTest();
-  await app.queryTest();
-  // await app.updateTest();
+  // await app.queryTest();
+  await app.updateTest();
   // await app.counterTest();
 })();
