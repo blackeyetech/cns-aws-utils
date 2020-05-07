@@ -17,16 +17,25 @@ export interface Opts extends Aws.Opts {
   sortKey?: string;
 }
 
+export interface UpdateItemConditions {
+  condition: string;
+  attribute: string;
+  value?: number | string | boolean;
+  between?: { high: any; low: any };
+}
+
 export interface UpdateItemParams {
   key: { partitionKeyValue: any; sortKeyValue?: any };
   set?: { [key: string]: any };
   add?: { [key: string]: any };
   append?: { [key: string]: any[] };
   remove?: string[];
-  condition?: {
-    exists: boolean;
-    attribute: string;
-  };
+  // condition?: {
+  //   exists: boolean;
+  //   attribute: string;
+  // };
+  conditions?: UpdateItemConditions[];
+
   returnUpdated?: string;
 }
 
@@ -118,51 +127,51 @@ export class Table extends Aws.Base {
 
   async query(query: QueryParams): Promise<AWS_DDB.DocumentClient.QueryOutput> {
     let values: AWS_DDB.DocumentClient.ExpressionAttributeValueMap = {
-      ":p": query.partitionKeyValue,
+      ":pval": query.partitionKeyValue,
     };
     let names: AWS_DDB.DocumentClient.ExpressionAttributeNameMap = {
-      "#p": this._partitionKey,
+      "#pkey": this._partitionKey,
     };
-    let expression = "#p = :p";
+    let expression = "#pkey = :pval";
 
     if (this._sortKey !== undefined && query.sortCriteria !== undefined) {
-      names["#s"] = this._sortKey;
+      names["#skey"] = this._sortKey;
 
       switch (query.sortCriteria.operator) {
         case "EQ":
-          expression += " and #s = :s";
-          values[":s"] = query.sortCriteria.value;
+          expression += " and #skey = :sval";
+          values[":sval"] = query.sortCriteria.value;
           break;
         case "NE":
-          expression += " and #s <> :s";
-          values[":s"] = query.sortCriteria.value;
+          expression += " and #skey <> :sval";
+          values[":sval"] = query.sortCriteria.value;
           break;
         case "LE":
-          expression += " and #s <= :s";
-          values[":s"] = query.sortCriteria.value;
+          expression += " and #skey <= :sval";
+          values[":sval"] = query.sortCriteria.value;
           break;
         case "LT":
-          expression += " and #s < :s";
-          values[":s"] = query.sortCriteria.value;
+          expression += " and #skey < :sval";
+          values[":sval"] = query.sortCriteria.value;
           break;
         case "GE":
-          expression += " and #s >= :s";
-          values[":s"] = query.sortCriteria.value;
+          expression += " and #skey >= :sval";
+          values[":sval"] = query.sortCriteria.value;
           break;
         case "GT":
-          expression += " and #s > :s";
-          values[":s"] = query.sortCriteria.value;
+          expression += " and #skey > :sval";
+          values[":sval"] = query.sortCriteria.value;
           break;
         case "BETWEEN":
           if (query.sortCriteria.between !== undefined) {
-            expression += " and #s between :low AND :high";
+            expression += " and #skey between :low AND :high";
             values[":low"] = query.sortCriteria.between.low;
             values[":high"] = query.sortCriteria.between.high;
           }
           break;
         case "BEGINS_WITH":
-          expression += " and begins_with(#s, :s)";
-          values[":s"] = query.sortCriteria.value;
+          expression += " and begins_with(#skey, :sval)";
+          values[":sval"] = query.sortCriteria.value;
           break;
       }
     }
@@ -334,14 +343,58 @@ export class Table extends Aws.Base {
 
     let conditionExpression = "";
 
-    if (item.condition !== undefined) {
+    let conditions = <UpdateItemConditions[]>[];
+    if (item.conditions !== undefined) {
+      conditions = item.conditions;
+    }
+
+    for (let condition of conditions) {
+      if (conditionExpression.length) {
+        conditionExpression += " and ";
+      }
+
       let name = String.fromCharCode(nameCode);
 
-      names[`#${name}`] = item.condition.attribute;
-      if (item.condition.exists) {
-        conditionExpression = `attribute_exists(#${name})`;
-      } else {
-        conditionExpression = `attribute_not_exists(#${name})`;
+      names[`#${name}`] = condition.attribute;
+
+      switch (condition.condition) {
+        case "EXISTS":
+          conditionExpression += `attribute_exists(#${name})`;
+          break;
+        case "NOT_EXISTS":
+          conditionExpression += `attribute_not_exists(#${name})`;
+          break;
+        case "EQ":
+          conditionExpression += `#${name} = :${name}`;
+          values[`:${name}`] = condition.value;
+          break;
+        case "NE":
+          conditionExpression += `#${name} <> :${name}`;
+          values[`:${name}`] = condition.value;
+          break;
+        case "LE":
+          conditionExpression += `#${name} <= :${name}`;
+          values[`:${name}`] = condition.value;
+          break;
+        case "LT":
+          conditionExpression += `#${name} < :${name}`;
+          values[`:${name}`] = condition.value;
+          break;
+        case "GE":
+          conditionExpression += `#${name} >= :${name}`;
+          values[`:${name}`] = condition.value;
+          break;
+        case "GT":
+          conditionExpression += `#${name} > :${name}`;
+          values[`:${name}`] = condition.value;
+          break;
+        case "BETWEEN":
+          if (condition.between !== undefined) {
+            conditionExpression += `#${name} between :low AND :high`;
+            values[":low"] = condition.between.low;
+            values[":high"] = condition.between.high;
+          }
+          break;
       }
 
       nameCode++;
@@ -382,7 +435,7 @@ export class Table extends Aws.Base {
         // Check if this is just because the condition failed
         if (
           e.code === "ConditionalCheckFailedException" &&
-          item.condition !== undefined
+          item.conditions !== undefined
         ) {
           return;
         }
@@ -411,10 +464,12 @@ export class Table extends Aws.Base {
     let upParams = <UpdateItemParams>{
       key: { partitionKeyValue: counterKey, sortKeyValue: counter },
       add: { counter: 1 },
-      condition: {
-        attribute: counterKey,
-        exists: true,
-      },
+      conditions: [
+        {
+          attribute: counterKey,
+          condition: "EXISTS",
+        },
+      ],
       returnUpdated: "UPDATED_NEW",
     };
 
@@ -429,7 +484,12 @@ export class Table extends Aws.Base {
     upParams = {
       key: { partitionKeyValue: counterKey, sortKeyValue: counter },
       set: { [counterKey]: 1 },
-      condition: { attribute: counterKey, exists: false },
+      conditions: [
+        {
+          attribute: counterKey,
+          condition: "NOT_EXISTS",
+        },
+      ],
     };
 
     let created = await this.updateItem(upParams);
