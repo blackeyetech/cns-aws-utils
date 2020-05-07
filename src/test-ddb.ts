@@ -97,12 +97,12 @@ class App extends CNShell {
   }
 
   async updateTest() {
-    let set = { a: "aaa", b: "bbbb" };
+    let set = { a: "aaa", b: "bbbb", "m.l": [] };
 
     let upParams: AWS.DDB.UpdateItemParams = {
       key: { partitionKeyValue: "asset", sortKeyValue: "xxx" },
       set,
-      append: { "m.l": [1] },
+      //append: { "m.l": [1] },
     };
 
     let res1 = await this._table1.updateItem(upParams);

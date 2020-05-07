@@ -211,7 +211,7 @@ export class Table extends Aws.Base {
       params.ProjectionExpression = attributes;
     }
 
-    this.info("%j", params);
+    this.debug("%j", params);
 
     return this.documentClient.query(params).promise();
   }
