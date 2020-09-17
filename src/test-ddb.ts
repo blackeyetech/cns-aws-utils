@@ -32,7 +32,13 @@ class App extends CNShell {
       {
         data_type: "asset",
         data_key: "xxx",
-        monitors: {},
+        monitors: {
+          IN: {
+            tr: {
+              count: 0,
+            },
+          },
+        },
       },
     ]);
 
@@ -97,46 +103,14 @@ class App extends CNShell {
   }
 
   async updateTest() {
-    let set = { a: "aaa", b: "bbbb", "m.l": [] };
-
     let upParams: AWS.DDB.UpdateItemParams = {
       key: { partitionKeyValue: "asset", sortKeyValue: "xxx" },
-      set,
+      add: { "monitors.IN.tr.count": 10 },
       //append: { "m.l": [1] },
     };
 
     let res1 = await this._table1.updateItem(upParams);
     this.info("%j", res1);
-
-    // let qryParams: AWS.DDB.QueryParams = {
-    //   partitionKeyValue: "asset",
-    //   sortCriteria: {
-    //     operator: "EQ",
-    //     value: "xxx",
-    //   },
-    // };
-
-    // let results = await this._table1.query(qryParams);
-
-    // this.info("%j", results);
-
-    // let add = <{ [key: string]: any }>{};
-    // add[`${m}.counter`] = 1;
-    // set = {};
-    // set[`${m}.counter2`] = 0;
-
-    // upParams = {
-    //   key: { partitionKeyValue: "asset", sortKeyValue: "xxx" },
-    //   add,
-    //   set,
-    //   remove: [`${m}.RET`],
-    //   returnUpdated: "UPDATED_NEW",
-    // };
-
-    // let results2 = await this._table1.updateItem(upParams);
-    // this.info("%j", results2);
-
-    // sleep(1000);
   }
 
   async counterTest() {
@@ -158,7 +132,7 @@ let app = new App("App");
 app.start();
 
 (async () => {
-  // await app.putTest();
+  await app.putTest();
   // await app.queryTest();
   await app.updateTest();
   // await app.counterTest();
