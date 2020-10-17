@@ -12,7 +12,7 @@ class App extends CNShell {
     this._table1 = new AWS.DDB.Table("Test", {
       region: "eu-west-1",
       table: table === undefined ? "UNKNOWN" : table,
-      partitionKey: "key",
+      partitionKey: "id",
       sortKey: "sort",
     });
   }
@@ -121,14 +121,14 @@ class App extends CNShell {
     sleep(1);
   }
 
-  async newQry(key: { [key: string]: any }) {
+  async newQry(key: AWS.DDB.GetDeleteParams) {
     return this._table1.getItem(key);
   }
-  async newPut(key: { [key: string]: any }) {
-    return this._table1.putItem(key);
+  async newPut(item: { [key: string]: any }) {
+    return this._table1.putItem(item);
   }
-  async newDelete(key: { [key: string]: any }) {
-    return this._table1.delteItem(key);
+  async newDelete(key: AWS.DDB.GetDeleteParams) {
+    return this._table1.deleteItem(key);
   }
 }
 
@@ -142,17 +142,17 @@ let app = new App("App");
 app.start();
 
 (async () => {
-  let item = await app.newQry({ key: "1", sort: "1" });
+  let item = await app.newQry({ partitionKeyValue: "1", sortKeyValue: "1" });
   console.log("%j", item);
-  let success = await app.newPut({ key: "1", sort: "1" });
+  let success = await app.newPut({ id: "1", sort: "1" });
   console.log(success);
-  item = await app.newQry({ key: "1", sort: "1" });
+  item = await app.newQry({ partitionKeyValue: "1", sortKeyValue: "1" });
   console.log("%j", item);
-  success = await app.newDelete({ key: "1", sort: "1" });
+  success = await app.newDelete({ partitionKeyValue: "1", sortKeyValue: "1" });
   console.log(success);
-  success = await app.newDelete({ key: "1", sort: "1" });
+  success = await app.newDelete({ partitionKeyValue: "1", sortKeyValue: "1" });
   console.log(success);
-  item = await app.newQry({ key: "1", sort: "1" });
+  item = await app.newQry({ partitionKeyValue: "1", sortKeyValue: "1" });
   console.log("%j", item);
   // await app.putTest();
   // await app.queryTest();

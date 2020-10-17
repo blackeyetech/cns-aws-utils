@@ -71,6 +71,11 @@ export interface QueryParams {
   attributes?: string[];
 }
 
+export interface GetDeleteParams {
+  partitionKeyValue: any;
+  sortKeyValue: any;
+}
+
 // Class Table here
 export class Table extends Aws.Base {
   // Properties here
@@ -164,13 +169,19 @@ export class Table extends Aws.Base {
     return success;
   }
 
-  async getItem(key: {
-    [key: string]: any;
-  }): Promise<AWS_DDB.DocumentClient.GetItemOutput | void> {
-    let params: AWS_DDB.DocumentClient.GetItemInput = {
+  async getItem(
+    key: GetDeleteParams,
+  ): Promise<AWS_DDB.DocumentClient.GetItemOutput | void> {
+    let params: AWS_DDB.DocumentClient.DeleteItemInput = {
       TableName: this._table,
-      Key: key,
+      Key: {
+        [this._partitionKey]: key.partitionKeyValue,
+      },
     };
+
+    if (this._sortKey !== undefined && key.sortKeyValue !== undefined) {
+      params.Key[this._sortKey] = key.sortKeyValue;
+    }
 
     let item = await this.documentClient
       .get(params)
@@ -188,11 +199,17 @@ export class Table extends Aws.Base {
     return item;
   }
 
-  async delteItem(key: { [key: string]: any }): Promise<boolean> {
+  async deleteItem(key: GetDeleteParams): Promise<boolean> {
     let params: AWS_DDB.DocumentClient.DeleteItemInput = {
       TableName: this._table,
-      Key: key,
+      Key: {
+        [this._partitionKey]: key.partitionKeyValue,
+      },
     };
+
+    if (this._sortKey !== undefined && key.sortKeyValue !== undefined) {
+      params.Key[this._sortKey] = key.sortKeyValue;
+    }
 
     let success = true;
 
