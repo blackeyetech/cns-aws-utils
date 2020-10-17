@@ -9,6 +9,20 @@ import AWS_DDB from "aws-sdk/clients/dynamodb";
 const DDB_API_VER = "2012-08-10";
 const DDB_COUNTER = "counter";
 
+// Consts here
+export let CriteriaOperators = {
+  EQ: "EQ",
+  NE: "NE",
+  LE: "LE",
+  LT: "LT",
+  GE: "GE",
+  GT: "GT",
+  BETWEEN: "BETWEEN",
+  BEGINS_WITH: "BEGINS_WITH",
+  EXISTS: "EXISTS",
+  NOT_EXISTS: "NOT_EXISTS",
+};
+
 // Interfaces here
 export interface Opts extends Aws.Opts {
   table: string;
@@ -93,6 +107,31 @@ export class Table extends Aws.Base {
     return true;
   }
 
+  async putItem(item: { [key: string]: any }): Promise<boolean> {
+    let params: AWS_DDB.DocumentClient.PutItemInput = {
+      TableName: this._table,
+      Item: item,
+    };
+
+    let success = true;
+
+    await this.documentClient
+      .put(params)
+      .promise()
+      .catch(e => {
+        this.error(
+          "putIem (Table: %s) Error: (%s: %s).",
+          this._table,
+          e.code,
+          e,
+          params,
+        );
+        success = false;
+      });
+
+    return success;
+  }
+
   async putItems(items: { [key: string]: any }[]): Promise<boolean> {
     let params: AWS_DDB.DocumentClient.BatchWriteItemInput = {
       RequestItems: {
@@ -125,6 +164,56 @@ export class Table extends Aws.Base {
     return success;
   }
 
+  async getItem(key: {
+    [key: string]: any;
+  }): Promise<AWS_DDB.DocumentClient.GetItemOutput | void> {
+    let params: AWS_DDB.DocumentClient.GetItemInput = {
+      TableName: this._table,
+      Key: key,
+    };
+
+    let item = await this.documentClient
+      .get(params)
+      .promise()
+      .catch(e => {
+        this.error(
+          "getItem (Table: %s) Error: (%s: %s).",
+          this._table,
+          e.code,
+          e,
+          params,
+        );
+      });
+
+    return item;
+  }
+
+  async delteItem(key: { [key: string]: any }): Promise<boolean> {
+    let params: AWS_DDB.DocumentClient.DeleteItemInput = {
+      TableName: this._table,
+      Key: key,
+    };
+
+    let success = true;
+
+    await this.documentClient
+      .delete(params)
+      .promise()
+      .catch(e => {
+        this.error(
+          "deleteItem (Table: %s) Error: (%s: %s).",
+          this._table,
+          e.code,
+          e,
+          params,
+        );
+
+        success = false;
+      });
+
+    return success;
+  }
+
   async query(query: QueryParams): Promise<AWS_DDB.DocumentClient.QueryOutput> {
     let values: AWS_DDB.DocumentClient.ExpressionAttributeValueMap = {
       ":pval": query.partitionKeyValue,
@@ -138,38 +227,38 @@ export class Table extends Aws.Base {
       names["#skey"] = this._sortKey;
 
       switch (query.sortCriteria.operator) {
-        case "EQ":
+        case CriteriaOperators.EQ:
           expression += " and #skey = :sval";
           values[":sval"] = query.sortCriteria.value;
           break;
-        case "NE":
+        case CriteriaOperators.NE:
           expression += " and #skey <> :sval";
           values[":sval"] = query.sortCriteria.value;
           break;
-        case "LE":
+        case CriteriaOperators.LE:
           expression += " and #skey <= :sval";
           values[":sval"] = query.sortCriteria.value;
           break;
-        case "LT":
+        case CriteriaOperators.LT:
           expression += " and #skey < :sval";
           values[":sval"] = query.sortCriteria.value;
           break;
-        case "GE":
+        case CriteriaOperators.GE:
           expression += " and #skey >= :sval";
           values[":sval"] = query.sortCriteria.value;
           break;
-        case "GT":
+        case CriteriaOperators.GT:
           expression += " and #skey > :sval";
           values[":sval"] = query.sortCriteria.value;
           break;
-        case "BETWEEN":
+        case CriteriaOperators.BETWEEN:
           if (query.sortCriteria.between !== undefined) {
             expression += " and #skey between :low AND :high";
             values[":low"] = query.sortCriteria.between.low;
             values[":high"] = query.sortCriteria.between.high;
           }
           break;
-        case "BEGINS_WITH":
+        case CriteriaOperators.BEGINS_WITH:
           expression += " and begins_with(#skey, :sval)";
           values[":sval"] = query.sortCriteria.value;
           break;
@@ -358,37 +447,37 @@ export class Table extends Aws.Base {
       names[`#${name}`] = condition.attribute;
 
       switch (condition.condition) {
-        case "EXISTS":
+        case CriteriaOperators.EXISTS:
           conditionExpression += `attribute_exists(#${name})`;
           break;
-        case "NOT_EXISTS":
+        case CriteriaOperators.NOT_EXISTS:
           conditionExpression += `attribute_not_exists(#${name})`;
           break;
-        case "EQ":
+        case CriteriaOperators.EQ:
           conditionExpression += `#${name} = :${name}`;
           values[`:${name}`] = condition.value;
           break;
-        case "NE":
+        case CriteriaOperators.NE:
           conditionExpression += `#${name} <> :${name}`;
           values[`:${name}`] = condition.value;
           break;
-        case "LE":
+        case CriteriaOperators.LE:
           conditionExpression += `#${name} <= :${name}`;
           values[`:${name}`] = condition.value;
           break;
-        case "LT":
+        case CriteriaOperators.LT:
           conditionExpression += `#${name} < :${name}`;
           values[`:${name}`] = condition.value;
           break;
-        case "GE":
+        case CriteriaOperators.GE:
           conditionExpression += `#${name} >= :${name}`;
           values[`:${name}`] = condition.value;
           break;
-        case "GT":
+        case CriteriaOperators.GT:
           conditionExpression += `#${name} > :${name}`;
           values[`:${name}`] = condition.value;
           break;
-        case "BETWEEN":
+        case CriteriaOperators.BETWEEN:
           if (condition.between !== undefined) {
             conditionExpression += `#${name} between :low AND :high`;
             values[":low"] = condition.between.low;

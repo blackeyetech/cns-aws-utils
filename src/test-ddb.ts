@@ -1,7 +1,7 @@
 import CNShell from "cn-shell";
 import * as AWS from "./main";
 
-const table = "master_data"; //process.env["TEST_TABLE"];
+const table = "test"; //process.env["TEST_TABLE"];
 
 class App extends CNShell {
   private _table1: AWS.DDB.Table;
@@ -9,11 +9,11 @@ class App extends CNShell {
   constructor(name: string) {
     super(name);
 
-    this._table1 = new AWS.DDB.Table("GSI", {
+    this._table1 = new AWS.DDB.Table("Test", {
       region: "eu-west-1",
-      table: table === undefined ? "UNKNOWN" : "master_data",
-      partitionKey: "data_type",
-      sortKey: "data_key",
+      table: table === undefined ? "UNKNOWN" : table,
+      partitionKey: "key",
+      sortKey: "sort",
     });
   }
 
@@ -120,6 +120,16 @@ class App extends CNShell {
 
     sleep(1);
   }
+
+  async newQry(key: { [key: string]: any }) {
+    return this._table1.getItem(key);
+  }
+  async newPut(key: { [key: string]: any }) {
+    return this._table1.putItem(key);
+  }
+  async newDelete(key: { [key: string]: any }) {
+    return this._table1.delteItem(key);
+  }
 }
 
 async function sleep(ms: number): Promise<void> {
@@ -132,8 +142,20 @@ let app = new App("App");
 app.start();
 
 (async () => {
-  await app.putTest();
+  let item = await app.newQry({ key: "1", sort: "1" });
+  console.log("%j", item);
+  let success = await app.newPut({ key: "1", sort: "1" });
+  console.log(success);
+  item = await app.newQry({ key: "1", sort: "1" });
+  console.log("%j", item);
+  success = await app.newDelete({ key: "1", sort: "1" });
+  console.log(success);
+  success = await app.newDelete({ key: "1", sort: "1" });
+  console.log(success);
+  item = await app.newQry({ key: "1", sort: "1" });
+  console.log("%j", item);
+  // await app.putTest();
   // await app.queryTest();
-  await app.updateTest();
+  // await app.updateTest();
   // await app.counterTest();
 })();
