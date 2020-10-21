@@ -12,6 +12,7 @@ const MIN_BATCH_SIZE = 10;
 // Interfaces here
 export interface SenderOpts extends Opts {
   queue: string;
+  fifo?: boolean;
 }
 
 export interface ReceiverOpts extends Opts {
@@ -27,12 +28,15 @@ export class Sender extends Base {
   // Properties here
   private readonly _queue: string;
   private _sqs: AWS_SQS;
+  private _fifo: boolean;
 
   // Constructor here
   constructor(name: string, opts: SenderOpts) {
     super(name, opts);
 
     this._queue = opts.queue;
+    this._fifo = opts.fifo === undefined ? false : opts.fifo; // default to false
+
     this.info("Queue: %s", this._queue);
 
     // Create AWS service objects
@@ -52,6 +56,7 @@ export class Sender extends Base {
   async sendMessage(
     msg: string,
     attribs?: AWS_SQS.MessageBodyAttributeMap,
+    msgGroupID?: string,
   ): Promise<boolean> {
     if (this._playbackFile !== "") {
       this.writePlayback(
@@ -65,6 +70,16 @@ export class Sender extends Base {
       MessageBody: msg,
       MessageAttributes: attribs,
     };
+
+    if (this._fifo) {
+      if (msgGroupID !== undefined) {
+        params.MessageGroupId = msgGroupID;
+      } else {
+        params.MessageGroupId = this._queue;
+      }
+    }
+
+    this.info("%j", params);
 
     let success = true;
 
