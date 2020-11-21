@@ -79,8 +79,6 @@ export class Sender extends Base {
       }
     }
 
-    this.info("%j", params);
-
     let success = true;
 
     await this._sqs

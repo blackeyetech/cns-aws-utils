@@ -112,6 +112,7 @@ export class Table extends Aws.Base {
     return true;
   }
 
+  // code = "ThrottlingException"
   async putItem(item: { [key: string]: any }): Promise<boolean> {
     let params: AWS_DDB.DocumentClient.PutItemInput = {
       TableName: this._table,
