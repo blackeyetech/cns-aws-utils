@@ -73,7 +73,7 @@ export interface QueryParams {
 
 export interface GetDeleteParams {
   partitionKeyValue: any;
-  sortKeyValue: any;
+  sortKeyValue?: any;
 }
 
 // Class Table here
