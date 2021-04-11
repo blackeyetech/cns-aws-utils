@@ -54,12 +54,12 @@
     "husky": "^3.1.0",
     "lint-staged": "^9.5.0",
     "prettier": "^1.19.1",
-    "typescript": "^3.9.7"
+    "typescript": "^3.9.9"
   },
   "dependencies": {
-    "@types/node": "^12.12.61",
-    "aws-sdk": "^2.754.0",
-    "cn-shell": "^2.14.0"
+    "@types/node": "^12.20.7",
+    "aws-sdk": "^2.884.0",
+    "cn-shell": "^2.15.4"
   },
   "repository": {
     "type": "git",
