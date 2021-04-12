@@ -68,13 +68,14 @@ export class Bucket extends Aws.Base {
     let files: string[] = [];
 
     if (success && data.Contents !== undefined) {
+      // NOTE: Will include a "/" if this is a folder
       for (let content of data.Contents) {
         if (content.Key !== undefined) {
           // This will create an array with 2 elements:
           //  - 1st is the dir
-          //  - 2nd is the file in the directory (if there are no sub-dirs)
+          //  - 2nd is the key
           let parts = content.Key.split(directory);
-          if (parts.length === 2 && parts[1].length > 0) {
+          if (parts.length === 2 && parts[1].length > 0 && parts[1] !== "/") {
             files.push(parts[1]);
           }
         }
@@ -89,9 +90,7 @@ export class Bucket extends Aws.Base {
     directory: string,
     file: string,
     expires: number,
-  ): Promise<string | undefined> {
-    let success = true;
-
+  ): Promise<string | void> {
     let url = await this._s3
       .getSignedUrlPromise(operation, {
         Bucket: this._bucket,
@@ -100,21 +99,39 @@ export class Bucket extends Aws.Base {
       })
       .catch(e => {
         this.error(
-          "listFiles (bucket: %s) Error: (%s: %s). File/Operation  (%s/%s)",
+          "presignFileRequest (bucket: %s) Error: (%s: %s). File/Operation  (%s/%s)",
           this._bucket,
           e.code,
           e,
           file,
           operation,
         );
+      });
+
+    return url;
+  }
+
+  async deleteFile(file: string): Promise<boolean> {
+    let success = true;
+
+    await this._s3
+      .deleteObject({
+        Bucket: this._bucket,
+        Key: file,
+      })
+      .promise()
+      .catch(e => {
+        this.error(
+          "deleteFile (bucket: %s) Error: (%s: %s). File was (%s)",
+          this._bucket,
+          e.code,
+          e,
+          file,
+        );
 
         success = false;
       });
 
-    if (success && url !== undefined) {
-      return url;
-    }
-
-    return undefined;
+    return success;
   }
 }

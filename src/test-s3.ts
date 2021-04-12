@@ -13,12 +13,18 @@ class App extends CNShell {
   }
 
   async start(): Promise<boolean> {
+    let bucket = process.env["TEST_BUCKET"];
+
+    if (bucket === undefined) {
+      throw new Error("Must set env var TEST_BUCEKT");
+    }
+
     let test = new AWS.S3.Bucket("Bucket", {
-      bucket: "docs-irl-dev1-fm2point0-net",
+      bucket,
       region: "eu-west-1",
     });
 
-    let files = await test.listFiles("docs/water/site/1");
+    let files = await test.listFiles("docs/water/site/4");
 
     this.info("Files: %j", files);
 
@@ -30,6 +36,10 @@ class App extends CNShell {
     );
 
     this.info("url: %s", url);
+
+    let success = await test.deleteFile("docs/water/site/1/Summary Report.pdf");
+    this.info("Deleted succes? %j", success);
+
     return true;
   }
 }
