@@ -59,7 +59,7 @@
   "dependencies": {
     "@types/node": "^12.20.7",
     "aws-sdk": "^2.884.0",
-    "cn-shell": "^2.15.4"
+    "cn-shell": "^2.15.6"
   },
   "repository": {
     "type": "git",
