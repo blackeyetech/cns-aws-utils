@@ -74,7 +74,7 @@ export class Bucket extends Aws.Base {
           // This will create an array with 2 elements:
           //  - 1st is the dir
           //  - 2nd is the key
-          let parts = content.Key.split(directory);
+          let parts = content.Key.split(`${directory}/`);
           if (parts.length === 2 && parts[1].length > 0 && parts[1] !== "/") {
             files.push(parts[1]);
           }
