@@ -90,7 +90,7 @@ export class Bucket extends Aws.Base {
     directory: string,
     file: string,
     expires: number,
-  ): Promise<string | void> {
+  ): Promise<string | undefined> {
     let url = await this._s3
       .getSignedUrlPromise(operation, {
         Bucket: this._bucket,
@@ -108,7 +108,11 @@ export class Bucket extends Aws.Base {
         );
       });
 
-    return url;
+    if (typeof url === "string") {
+      return url;
+    }
+
+    return undefined;
   }
 
   async deleteFile(file: string): Promise<boolean> {
