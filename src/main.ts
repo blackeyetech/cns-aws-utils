@@ -7,6 +7,7 @@ import * as DDB from "./aws-dynamodb";
 import * as Secrets from "./aws-secret";
 import * as Firehose from "./aws-firehose";
 import * as S3 from "./aws-s3";
+import * as SESv2 from "./aws-ses";
 
 import AWS_SQS from "aws-sdk/clients/sqs";
 import AWS_SNS from "aws-sdk/clients/sns";
@@ -14,6 +15,7 @@ import AWS_DDB from "aws-sdk/clients/dynamodb";
 import AWS_SecretsManager from "aws-sdk/clients/secretsmanager";
 import AWS_Firehose from "aws-sdk/clients/firehose";
 import AWS_S3 from "aws-sdk/clients/s3";
+import AWS_SESv2 from "aws-sdk/clients/sesv2";
 
 import * as fs from "fs";
 
@@ -272,10 +274,12 @@ export {
   Secrets,
   Firehose,
   S3,
+  SESv2,
   AWS_SQS,
   AWS_SNS,
   AWS_DDB,
   AWS_SecretsManager,
   AWS_Firehose,
   AWS_S3,
+  AWS_SESv2,
 };
