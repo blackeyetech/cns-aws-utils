@@ -90,12 +90,14 @@ export class Bucket extends Aws.Base {
     directory: string,
     file: string,
     expires: number,
+    contentType?: string,
   ): Promise<string | undefined> {
     let url = await this._s3
       .getSignedUrlPromise(operation, {
         Bucket: this._bucket,
         Key: `${directory}/${file}`,
         Expires: expires,
+        ContentType: contentType,
       })
       .catch(e => {
         this.error(
