@@ -158,7 +158,7 @@ let app = new App("App");
 app.start();
 
 (async () => {
-  let items = await app.scanTest();
+  await app.scanTest();
 
   // let item = await app.newQry({ partitionKeyValue: "1", sortKeyValue: "1" });
   // console.log("%j", item);
