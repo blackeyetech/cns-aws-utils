@@ -1,7 +1,7 @@
 import CNShell from "cn-shell";
 import * as AWS from "./main";
 
-const table = "test"; //process.env["TEST_TABLE"];
+const table = process.env["TEST_TABLE"];
 
 class App extends CNShell {
   private _table1: AWS.DDB.Table;
@@ -130,6 +130,22 @@ class App extends CNShell {
   async newDelete(key: AWS.DDB.GetDeleteParams) {
     return this._table1.deleteItem(key);
   }
+
+  async scanTest() {
+    let results = await this._table1.scan();
+
+    if (results.Items === undefined) {
+      return;
+    }
+
+    console.info("%j", results.Items);
+    console.info("%j", JSON.stringify(results.Items).length);
+    // for (let i = 0; i < results.Items.length; i++) {
+    //   let item = results.Items[i];
+
+    //   console.log("%j", item);
+    // }
+  }
 }
 
 async function sleep(ms: number): Promise<void> {
@@ -142,18 +158,20 @@ let app = new App("App");
 app.start();
 
 (async () => {
-  let item = await app.newQry({ partitionKeyValue: "1", sortKeyValue: "1" });
-  console.log("%j", item);
-  let success = await app.newPut({ id: "1", sort: "1" });
-  console.log(success);
-  item = await app.newQry({ partitionKeyValue: "1", sortKeyValue: "1" });
-  console.log("%j", item);
-  success = await app.newDelete({ partitionKeyValue: "1", sortKeyValue: "1" });
-  console.log(success);
-  success = await app.newDelete({ partitionKeyValue: "1", sortKeyValue: "1" });
-  console.log(success);
-  item = await app.newQry({ partitionKeyValue: "1", sortKeyValue: "1" });
-  console.log("%j", item);
+  let items = await app.scanTest();
+
+  // let item = await app.newQry({ partitionKeyValue: "1", sortKeyValue: "1" });
+  // console.log("%j", item);
+  // let success = await app.newPut({ id: "1", sort: "1" });
+  // console.log(success);
+  // item = await app.newQry({ partitionKeyValue: "1", sortKeyValue: "1" });
+  // console.log("%j", item);
+  // success = await app.newDelete({ partitionKeyValue: "1", sortKeyValue: "1" });
+  // console.log(success);
+  // success = await app.newDelete({ partitionKeyValue: "1", sortKeyValue: "1" });
+  // console.log(success);
+  // item = await app.newQry({ partitionKeyValue: "1", sortKeyValue: "1" });
+  // console.log("%j", item);
   // await app.putTest();
   // await app.queryTest();
   // await app.updateTest();

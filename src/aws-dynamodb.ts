@@ -607,4 +607,12 @@ export class Table extends Aws.Base {
 
     return "1";
   }
+
+  async scan(): Promise<AWS_DDB.DocumentClient.ScanOutput> {
+    let params: AWS_DDB.DocumentClient.ScanInput = {
+      TableName: this._table,
+    };
+
+    return this.documentClient.scan(params).promise();
+  }
 }
