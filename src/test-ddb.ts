@@ -12,8 +12,8 @@ class App extends CNShell {
     this._table1 = new AWS.DDB.Table("Test", {
       region: "eu-west-1",
       table: table === undefined ? "UNKNOWN" : table,
-      partitionKey: "id",
-      sortKey: "sort",
+      partitionKey: "dataType",
+      sortKey: "dataKey",
     });
   }
 
@@ -30,15 +30,9 @@ class App extends CNShell {
   async putTest() {
     await this._table1.putItems([
       {
-        data_type: "asset",
-        data_key: "xxx",
-        monitors: {
-          IN: {
-            tr: {
-              count: 0,
-            },
-          },
-        },
+        dataType: "asset",
+        dataKey: "xxx",
+        data: "123",
       },
     ]);
 
@@ -105,12 +99,22 @@ class App extends CNShell {
   async updateTest() {
     let upParams: AWS.DDB.UpdateItemParams = {
       key: { partitionKeyValue: "asset", sortKeyValue: "xxx" },
-      add: { "monitors.IN.tr.count": 10 },
-      //append: { "m.l": [1] },
+      set: { data: 123, other: undefined },
     };
 
     let res1 = await this._table1.updateItem(upParams);
     this.info("%j", res1);
+
+    let qryParams: AWS.DDB.QueryParams = {
+      partitionKeyValue: "asset",
+      sortCriteria: {
+        operator: "EQ",
+        value: "xxx",
+      },
+    };
+
+    let results = await this._table1.query(qryParams);
+    this.info("%j", results);
   }
 
   async counterTest() {
@@ -158,7 +162,7 @@ let app = new App("App");
 app.start();
 
 (async () => {
-  await app.scanTest();
+  // await app.scanTest();
 
   // let item = await app.newQry({ partitionKeyValue: "1", sortKeyValue: "1" });
   // console.log("%j", item);
@@ -172,8 +176,8 @@ app.start();
   // console.log(success);
   // item = await app.newQry({ partitionKeyValue: "1", sortKeyValue: "1" });
   // console.log("%j", item);
-  // await app.putTest();
+  await app.putTest();
   // await app.queryTest();
-  // await app.updateTest();
+  await app.updateTest();
   // await app.counterTest();
 })();

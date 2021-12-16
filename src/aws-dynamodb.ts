@@ -336,6 +336,11 @@ export class Table extends Aws.Base {
       expression = "SET";
 
       for (let key in item.set) {
+        // If the value is undefined then skip this or DDB will spit the dummy
+        if (item.set[key] === undefined) {
+          continue;
+        }
+
         name = String.fromCharCode(nameCode);
         if (name !== "a") {
           expression += ",";
@@ -366,6 +371,11 @@ export class Table extends Aws.Base {
       }
 
       for (let key in item.add) {
+        // If the value is undefined then skip this or DDB will spit the dummy
+        if (item.add[key] === undefined) {
+          continue;
+        }
+
         name = String.fromCharCode(nameCode);
         if (name !== "a") {
           expression += ",";
@@ -396,6 +406,11 @@ export class Table extends Aws.Base {
       }
 
       for (let key in item.append) {
+        // If the value is undefined then skip this or DDB will spit the dummy
+        if (item.append[key] === undefined) {
+          continue;
+        }
+
         name = String.fromCharCode(nameCode);
         if (name !== "a") {
           expression += ",";
